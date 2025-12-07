@@ -196,13 +196,76 @@ POST /bookings/{id}/exchange-offers → výmena lístkov
 
 ### 📋 Ďalšie kroky (budúce implementácie)
 
-**Core booking engine:**
-1. GTFS-RT feed processing (real-time transit data)
-2. Multi-modal journey planning (bus, train, metro, ferry)
-3. Dynamic pricing engine s revenue optimization
-4. Payment processing integration (Stripe, PayPal, local)
-5. Ticket validation a mobile ticket generation
-6. Customer notification system (SMS, email, push)
+## 🔨 Phase 1 Implementation Guide (v1.2.0)
+
+### Immediate Implementation Steps
+
+**📁 Required Files Structure:**
+```
+src/
+├── lib/osdm/
+│   ├── client.ts         # OSDM HTTP client with auth
+│   ├── types.ts          # Zod schemas & validation
+│   ├── auth.ts           # Token management
+│   └── utils.ts          # Error handling & formatting
+├── app/api/osdm/         # OSDM-compliant endpoints
+│   ├── trips-collection/route.ts
+│   ├── offers/route.ts
+│   ├── bookings/route.ts
+│   └── bookings/[id]/fulfillments/route.ts
+└── types/osdm.ts         # TypeScript interfaces
+```
+
+**🔧 Key Implementation Components:**
+
+1. **OSDM Client Setup** (Week 1, Day 1-3):
+   ```typescript
+   // Environment variables needed
+   OSDM_BILETO_API_URL=https://api.osdm.cz
+   OSDM_BILETO_CLIENT_ID=your_client_id
+   OSDM_BILETO_CLIENT_SECRET=your_client_secret
+   
+   // Core client with authentication
+   class OSSDMClient {
+     async searchTrips(request: TripSearchRequest): Promise<OSSDMTrip[]>
+     async createOffer(request: OfferCreateRequest): Promise<OSSDMOffer>
+     async createBooking(request: BookingCreateRequest): Promise<OSSDMBooking>
+   }
+   ```
+
+2. **API Endpoints Implementation** (Week 2, Day 6-10):
+   ```typescript
+   // OSDM v3.2 compliant endpoints
+   POST /api/osdm/trips-collection     → Trip search
+   POST /api/osdm/offers              → Create travel offers  
+   POST /api/osdm/bookings            → Create/retrieve bookings
+   POST /api/osdm/bookings/{id}/fulfillments → Generate tickets
+   POST /api/osdm/bookings/{id}/refund-offers → Process refunds
+   ```
+
+3. **TypeScript Integration:**
+   - Zod schemas pre request validation
+   - Complete OSDM v3.2 type definitions
+   - Error handling s proper HTTP status codes
+   - Response formatting pre consistent API structure
+
+**📋 Detailed Implementation:** See [PHASE1-DETAIL.md](./PHASE1-DETAIL.md) for complete step-by-step guide.
+
+### Phase 1 Success Metrics
+- [ ] **Bileto Integration:** Functional API connection s authentication
+- [ ] **OSDM Compliance:** All 6 core endpoints implemented
+- [ ] **Error Handling:** Proper validation a error responses  
+- [ ] **Testing:** Unit tests a integration tests passing
+- [ ] **Documentation:** API documentation a usage examples
+
+### Next Development Phases
+
+**Core booking engine (Phase 2-4):**
+1. Multi-carrier aggregation a booking orchestration
+2. AI-powered trip recommendations a pricing optimization  
+3. Real-time GTFS-RT integration a live updates
+4. Payment processing a ticket generation
+5. Enterprise features a production deployment
 
 **AI-powered optimization:**
 1. LLM pipeline pre intelligent trip recommendations

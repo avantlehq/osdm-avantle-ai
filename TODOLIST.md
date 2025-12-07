@@ -12,22 +12,47 @@ Building an AI-powered OSDM (Open Sales and Distribution Model) compliant rail b
 ## 📅 Implementation Phases
 
 ### Phase 1: OSDM Foundation (v1.2.0) - Week 1-2
-**Goal:** Integrate with Bileto OSDM API and establish compliant endpoints
+**Goal:** Integrate with Bileto OSDM API and establish compliant endpoints  
+**📋 Detailed Guide:** See [PHASE1-DETAIL.md](./PHASE1-DETAIL.md) for step-by-step implementation
 
 #### Week 1: OSDM API Integration
-- [ ] **Setup Bileto OSDM credentials** (waiting for sandbox access)
-- [ ] **Create OSDM HTTP client** with authentication
-- [ ] **Implement OSDM TypeScript types** from v3.2 specification
-- [ ] **Update environment variables** for OSDM configuration
-- [ ] **Create proxy layer architecture** in Next.js API routes
+- [ ] **Day 1: Environment Setup**
+  - [ ] Update .env.example with OSDM variables
+  - [ ] Install dependencies (axios, zod, date-fns, uuid)
+  - [ ] Create directory structure (src/lib/osdm/, src/app/api/osdm/)
+- [ ] **Day 2: TypeScript Types**
+  - [ ] Create OSDM core types (OSSDMTrip, OSSDMOffer, OSSDMBooking)
+  - [ ] Implement Zod schemas for validation
+  - [ ] Create request/response interfaces
+- [ ] **Day 3: HTTP Client**
+  - [ ] Implement OSSDMAuth class with token management
+  - [ ] Create OSSDMClient with interceptors
+  - [ ] Add retry logic and error handling
+- [ ] **Day 4-5: Utilities & Testing**
+  - [ ] Implement error handling utilities
+  - [ ] Create response formatting functions
+  - [ ] Set up unit test structure
 
 #### Week 2: Core OSDM Endpoints
-- [ ] **POST /api/osdm/trips-collection** - Trip search proxy to Bileto
-- [ ] **POST /api/osdm/offers** - Travel offers creation
-- [ ] **POST /api/osdm/bookings** - Booking management
-- [ ] **POST /api/osdm/bookings/{id}/fulfillments** - Ticket fulfillment
-- [ ] **POST /api/osdm/bookings/{id}/refund-offers** - Refund processing
-- [ ] **POST /api/osdm/bookings/{id}/exchange-offers** - Exchange handling
+- [ ] **Day 6-7: Trip Search**
+  - [ ] **POST /api/osdm/trips-collection** - Trip search proxy to Bileto
+  - [ ] Implement request validation with Zod
+  - [ ] Add proper error handling and response formatting
+- [ ] **Day 8-9: Offers & Bookings**
+  - [ ] **POST /api/osdm/offers** - Travel offers creation
+  - [ ] **POST /api/osdm/bookings** - Booking management (POST & GET)
+  - [ ] **GET /api/osdm/bookings** - Booking retrieval by ID
+- [ ] **Day 10: After-sales**
+  - [ ] **POST /api/osdm/bookings/{id}/fulfillments** - Ticket fulfillment
+  - [ ] **POST /api/osdm/bookings/{id}/refund-offers** - Refund processing
+  - [ ] **POST /api/osdm/bookings/{id}/exchange-offers** - Exchange handling
+
+#### Phase 1 Success Criteria
+- [ ] **Technical:** All 6 OSDM endpoints functional with Bileto API
+- [ ] **Integration:** Complete booking flow (search → offer → booking → fulfillment)
+- [ ] **Quality:** Error handling, validation, and logging implemented
+- [ ] **Testing:** Unit tests and basic integration tests passing
+- [ ] **Deployment:** Version 1.2.0 deployed with proper monitoring
 
 ### Phase 2: Multi-Carrier Platform (v1.3.0) - Week 3-4
 **Goal:** Build carrier management and multi-tenant architecture
