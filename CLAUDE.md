@@ -48,7 +48,7 @@ Tento agent bude konzumovaný OSDM Studio pre:
 - Pricing and availability analysis cez `/api/v1/engine/analyze`
 - Booking and journey reports cez `/api/v1/report/security`
 
-## Aktuálny stav repozitára
+## Aktuálny stav repozitára (v1.1.1)
 
 ### ✅ Hotové komponenty
 
@@ -57,6 +57,7 @@ Tento agent bude konzumovaný OSDM Studio pre:
 - GitHub Actions CI workflow (.github/workflows/ci.yml)
 - Vercel deployment konfigurácia (vercel.json)
 - Environment variables template (.env.example)
+- Semantic versioning (aktuálne v1.1.1)
 
 **API Endpoints (implementované ako mock):**
 ```
@@ -153,6 +154,46 @@ CARRIER_REGISTRY_URL=
    - Output: provision status, API endpoints, tenant configuration
    - TODO: Implementovať skutočné carrier isolation a onboarding
 
+## 🎯 OSDM Specification Analysis
+
+### Official OSDM v3.2 Standard
+**Source:** UIC (Union Internationale des Chemins de fer)
+**Specification:** Apache 2.0 License, REST API v3.2.0
+
+**Core OSDM API Endpoints:**
+```
+POST /trips-collection → vyhľadávanie spojení
+POST /offers → vytvorenie cestovných ponúk
+POST /bookings → rezervácia a booking
+POST /bookings/{id}/fulfillments → potvrdenie a lístky
+POST /bookings/{id}/refund-offers → vrátenie peňazí
+POST /bookings/{id}/exchange-offers → výmena lístkov
+```
+
+**OSDM Business Process Flow:**
+1. **Trip Search** - Vyhľadávanie spojení medzi stanicami
+2. **Offer Creation** - Vytvorenie cenových ponúk s možnosťami
+3. **Booking Process** - Rezervácia s údajmi cestujúcich
+4. **Fulfillment** - Potvrdenie a generovanie lístkov
+5. **After-sales** - Vrátenie, výmena, úpravy rezervácií
+
+**OSDM Operating Modes:**
+- **Retailer Mode**: Predaj lístkov od jedného alebo viacerých distribútorov
+- **Distributor Mode**: Kombinovanie taríf, správa bookingov a transakcií
+
+**Key OSDM Features:**
+- Multi-carrier booking v jednej transakcii
+- Standardizované tarification a pricing
+- Cross-border rail services support
+- Ancillary services (rezervácie, stravovacie služby)
+- Asynchronous a synchronous fulfillment
+- Comprehensive error handling
+
+**Integration Strategy:**
+- **Bileto OSDM API Sandbox** - Production-ready testing environment
+- **Real-world data** - Czech/European rail routes
+- **OSDM v3.2 compliance** - Guaranteed standard compatibility
+
 ### 📋 Ďalšie kroky (budúce implementácie)
 
 **Core booking engine:**
@@ -200,6 +241,20 @@ Založené na open transport standards a AI-enhanced user experience.
 
 **Projekt sa nachádza v:** `C:\Users\rasti\Projects\avantlehq\osdm-avantle-ai\`
 
+## Versioning Strategy
+
+**Current Version:** v1.1.1
+**Versioning Scheme:** Semantic Versioning (MAJOR.MINOR.PATCH)
+
+- **MAJOR** - Breaking API changes, major architecture updates
+- **MINOR** - New features, OSDM endpoint additions, backward compatible
+- **PATCH** - Bug fixes, performance improvements, documentation updates
+
+**Version Sync:**
+- Git tags pre každú verziu
+- Package.json version synchronizovaná s deployment
+- Production deployment triggers version increment
+
 ## Development commands
 
 ```bash
@@ -210,14 +265,26 @@ npm start            # Start production server
 npm run lint         # Run ESLint
 npm run type-check   # TypeScript checking
 
-# API Testing
+# Version management
+npm version patch    # Increment patch version (1.1.1 → 1.1.2)
+npm version minor    # Increment minor version (1.1.1 → 1.2.0)
+npm version major    # Increment major version (1.1.1 → 2.0.0)
+
+# API Testing (Current Mock Endpoints)
 # POST http://localhost:3000/api/v1/engine/scan
 # POST http://localhost:3000/api/v1/engine/analyze
 # POST http://localhost:3000/api/v1/report/security
 # POST http://localhost:3000/api/provision
 
+# Future OSDM-compliant endpoints
+# POST http://localhost:3000/api/osdm/trips-collection
+# POST http://localhost:3000/api/osdm/offers
+# POST http://localhost:3000/api/osdm/bookings
+# POST http://localhost:3000/api/osdm/bookings/{id}/fulfillments
+
 # Deployment
 git push origin main # Trigger CI build
+git tag v1.1.1      # Tag current version
 ```
 
 ## OSDM-specific functionality
