@@ -1,782 +1,1070 @@
-# Phase 1: OSDM Foundation - Detailed Implementation Guide
+# Phase 1: OSDM Standalone API - Detailed Implementation Guide
 
 **Target Version:** v1.2.0  
-**Duration:** 2 weeks  
-**Goal:** Integrate with Bileto OSDM API and establish compliant endpoints
+**Duration:** 10 days  
+**Goal:** Standalone OSDM 3.2 compliant distributor API with mock European rail data
 
-## 📋 Week 1: OSDM API Integration
+## 📋 Day 1-2: Monorepo & OpenAPI Setup
 
-### Day 1: Environment Setup & Credentials
-
-#### 1.1 Update Environment Variables
+### 1.1 Create Monorepo Structure
 ```bash
-# Update .env.example
-OSDM_BILETO_API_URL=https://api.osdm.cz
-OSDM_BILETO_CLIENT_ID=your_client_id
-OSDM_BILETO_CLIENT_SECRET=your_client_secret
-OSDM_BILETO_SANDBOX=true
-OSDM_API_VERSION=v3.2
-OSDM_REQUEST_TIMEOUT=30000
-OSDM_RETRY_ATTEMPTS=3
+# Create new monorepo structure
+mkdir osdm-platform
+cd osdm-platform
+
+# Initialize workspace
+npm init -y
+mkdir -p apps/osdm-api/src
+mkdir -p packages/osdm-domain/src
+mkdir -p packages/osdm-providers/mock-eu/src
+mkdir -p packages/osdm-schema/src
+mkdir -p spec infra
+
+# Update root package.json for workspace
 ```
 
-#### 1.2 Install Dependencies
+**File:** `osdm-platform/package.json`
+```json
+{
+  "name": "osdm-platform",
+  "version": "1.2.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/osdm-api",
+    "build": "npm run build -w apps/osdm-api",
+    "test": "npm test -w apps/osdm-api",
+    "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "npm run type-check --workspaces",
+    "codegen": "npm run codegen -w packages/osdm-schema",
+    "db:migrate": "npm run db:migrate -w apps/osdm-api",
+    "docker:up": "docker-compose -f infra/docker-compose.yml up -d"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "eslint": "^9",
+    "jest": "^29",
+    "@types/jest": "^29"
+  }
+}
+```
+
+### 1.2 Download OSDM v3.2 OpenAPI Spec
 ```bash
-cd osdm-avantle-ai
-npm install axios zod date-fns uuid
-npm install -D @types/uuid
+# Download official OSDM v3.2 spec
+curl -o spec/OSDM-online-api-v3.2.0.yml https://raw.githubusercontent.com/UnionInternationalCheminsdeFer/OSDM/main/specification/OSDM-online-api-v3.2.0.yml
 ```
 
-#### 1.3 Create Directory Structure
-```
-src/
-├── lib/
-│   ├── osdm/
-│   │   ├── client.ts          # HTTP client for OSDM API
-│   │   ├── types.ts           # TypeScript interfaces
-│   │   ├── auth.ts            # Authentication handling
-│   │   ├── utils.ts           # Helper functions
-│   │   └── validators.ts      # Zod schemas for validation
-│   └── constants.ts           # App constants
-├── app/api/osdm/              # OSDM API endpoints
-└── types/                     # Global TypeScript types
-    └── osdm.ts               # OSDM type definitions
+### 1.3 Setup OpenAPI Code Generation
+**File:** `packages/osdm-schema/package.json`
+```json
+{
+  "name": "@osdm/schema",
+  "version": "1.2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "codegen": "openapi-generator-cli generate -i ../../spec/OSDM-online-api-v3.2.0.yml -g typescript-fetch -o ./src/generated",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.7.0",
+    "typescript": "^5"
+  }
+}
 ```
 
-### Day 2: TypeScript Types & Interfaces
+### 1.4 Setup Fastify API Server
+**File:** `apps/osdm-api/package.json`
+```json
+{
+  "name": "@osdm/api",
+  "version": "1.2.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "fastify": "^4.0.0",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/swagger": "^8.0.0",
+    "prisma": "^5.0.0",
+    "@prisma/client": "^5.0.0",
+    "zod": "^3.22.0",
+    "uuid": "^9.0.0",
+    "@osdm/domain": "*",
+    "@osdm/providers": "*",
+    "@osdm/schema": "*"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5"
+  }
+}
+```
 
-#### 2.1 Create Core OSDM Types
-**File:** `src/types/osdm.ts`
-```typescript
-// OSDM v3.2 Core Types
-export interface OSSDMTrip {
-  id: string;
-  origin: Station;
-  destination: Station;
-  departure: string; // ISO 8601
-  arrival: string;   // ISO 8601
-  segments: TripSegment[];
-  duration: number; // minutes
+### 1.5 Setup Postgres with Prisma
+**File:** `apps/osdm-api/prisma/schema.prisma`
+```prisma
+generator client {
+  provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  offerId   String
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime?
+  
+  passengers Passenger[]
+  fulfillments Fulfillment[]
+  
+  contactEmail String
+  contactPhone String?
+  
+  @@map("bookings")
+}
+
+model Passenger {
+  id          String @id @default(uuid())
+  bookingId   String
+  booking     Booking @relation(fields: [bookingId], references: [id])
+  
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime?
+  passengerType PassengerType @default(ADULT)
+  
+  @@map("passengers")
+}
+
+model Fulfillment {
+  id         String @id @default(uuid())
+  bookingId  String
+  booking    Booking @relation(fields: [bookingId], references: [id])
+  
+  type       FulfillmentType
+  content    Json  // Ticket data, QR codes, etc.
+  createdAt  DateTime @default(now())
+  
+  @@map("fulfillments")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
+  SENIOR
+}
+
+enum FulfillmentType {
+  TICKET
+  RECEIPT
+  CONFIRMATION
+}
+```
+
+## 📋 Day 3-4: Domain Layer
+
+### 3.1 Domain Entities
+**File:** `packages/osdm-domain/src/entities/Station.ts`
+```typescript
 export interface Station {
   id: string;
+  uicCode?: string;
   name: string;
-  code: string;
-  location: {
+  country: string;
+  coordinates: {
     latitude: number;
     longitude: number;
   };
   timezone: string;
+  platforms?: Platform[];
 }
 
-export interface TripSegment {
+export interface Platform {
   id: string;
-  mode: TransportMode;
-  operator: Carrier;
-  line: string;
-  departure: {
-    station: Station;
-    time: string;
-    platform?: string;
-  };
-  arrival: {
-    station: Station;
-    time: string;
-    platform?: string;
-  };
+  name: string;
+  accessibility: boolean;
 }
+```
 
+**File:** `packages/osdm-domain/src/entities/Carrier.ts`
+```typescript
 export interface Carrier {
   id: string;
   name: string;
   shortName: string;
+  country: string;
+  uicCompanyCode?: string;
   logo?: string;
-}
-
-export type TransportMode = 'train' | 'bus' | 'tram' | 'metro' | 'ferry';
-
-export interface OSSDMOffer {
-  id: string;
-  tripId: string;
-  price: Price;
-  validUntil: string;
-  terms: OfferTerms;
-  ancillaries?: Ancillary[];
-}
-
-export interface Price {
-  amount: number;
-  currency: string;
-  breakdown?: PriceComponent[];
-}
-
-export interface PriceComponent {
-  type: 'fare' | 'reservation' | 'tax' | 'fee';
-  amount: number;
-  description: string;
-}
-
-export interface OSSDMBooking {
-  id: string;
-  offerId: string;
-  status: BookingStatus;
-  passengers: Passenger[];
-  contactInfo: ContactInfo;
-  createdAt: string;
-  expiresAt?: string;
-}
-
-export type BookingStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'cancelled' 
-  | 'completed' 
-  | 'expired';
-
-export interface Passenger {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth?: string;
-  discountCards?: DiscountCard[];
-}
-
-export interface ContactInfo {
-  email: string;
-  phone?: string;
-  address?: Address;
+  website?: string;
 }
 ```
 
-#### 2.2 Create Request/Response Types
-**File:** `src/lib/osdm/types.ts`
+**File:** `packages/osdm-domain/src/entities/ServicePattern.ts`
 ```typescript
-import { z } from 'zod';
+export interface ServicePattern {
+  id: string;
+  carrierId: string;
+  name: string;
+  vehicleType: VehicleType;
+  stops: ServiceStop[];
+  operatingDays: OperatingDays;
+}
 
-// Request schemas
-export const TripSearchRequestSchema = z.object({
-  origin: z.string().min(1),
-  destination: z.string().min(1),
-  departureTime: z.string().datetime(),
-  passengers: z.number().min(1).max(20),
-  preferences: z.object({
-    maxChanges: z.number().optional(),
-    accessibility: z.boolean().optional(),
-    class: z.enum(['economy', 'business', 'first']).optional(),
-  }).optional(),
-});
+export interface ServiceStop {
+  stationId: string;
+  arrivalOffsetMinutes?: number;
+  departureOffsetMinutes?: number;
+  platform?: string;
+  stopType: StopType;
+}
 
-export const OfferCreateRequestSchema = z.object({
-  tripId: z.string(),
-  passengers: z.array(z.object({
-    type: z.enum(['adult', 'child', 'senior']),
-    discountCards: z.array(z.string()).optional(),
-  })),
-  preferences: z.object({
-    seat: z.enum(['window', 'aisle', 'table']).optional(),
-    accessibility: z.boolean().optional(),
-  }).optional(),
-});
+export enum VehicleType {
+  RAILJET = 'railjet',
+  ICE = 'ice',
+  IC = 'ic',
+  EC = 'ec',
+  TGV = 'tgv',
+  REGIONAL = 'regional'
+}
 
-export const BookingCreateRequestSchema = z.object({
-  offerId: z.string(),
-  passengers: z.array(z.object({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    dateOfBirth: z.string().optional(),
-    email: z.string().email(),
-  })),
-  contactInfo: z.object({
-    email: z.string().email(),
-    phone: z.string().optional(),
-  }),
-  paymentMethod: z.enum(['card', 'paypal', 'bank_transfer']),
-});
+export enum StopType {
+  ORIGIN = 'origin',
+  INTERMEDIATE = 'intermediate',
+  DESTINATION = 'destination'
+}
 
-export type TripSearchRequest = z.infer<typeof TripSearchRequestSchema>;
-export type OfferCreateRequest = z.infer<typeof OfferCreateRequestSchema>;
-export type BookingCreateRequest = z.infer<typeof BookingCreateRequestSchema>;
+export interface OperatingDays {
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+}
 ```
 
-### Day 3: OSDM HTTP Client
-
-#### 3.1 Authentication Handler
-**File:** `src/lib/osdm/auth.ts`
+### 3.2 Domain Use Cases
+**File:** `packages/osdm-domain/src/usecases/SearchPlaces.ts`
 ```typescript
-interface OSSDMCredentials {
-  clientId: string;
-  clientSecret: string;
-  apiUrl: string;
+import { Station } from '../entities/Station';
+
+export interface SearchPlacesRequest {
+  query: string;
+  country?: string;
+  maxResults?: number;
 }
 
-interface OSSDMToken {
-  accessToken: string;
-  tokenType: string;
-  expiresIn: number;
-  expiresAt: number;
+export interface PlaceSearchProvider {
+  findPlaces(request: SearchPlacesRequest): Promise<Station[]>;
 }
 
-class OSSDMAuth {
-  private credentials: OSSDMCredentials;
-  private token: OSSDMToken | null = null;
+export class SearchPlacesUseCase {
+  constructor(private provider: PlaceSearchProvider) {}
 
-  constructor(credentials: OSSDMCredentials) {
-    this.credentials = credentials;
-  }
-
-  async getAccessToken(): Promise<string> {
-    if (this.token && Date.now() < this.token.expiresAt) {
-      return this.token.accessToken;
+  async execute(request: SearchPlacesRequest): Promise<Station[]> {
+    if (!request.query || request.query.length < 2) {
+      throw new Error('Query must be at least 2 characters long');
     }
 
-    await this.refreshToken();
-    return this.token!.accessToken;
-  }
-
-  private async refreshToken(): Promise<void> {
-    const response = await fetch(`${this.credentials.apiUrl}/auth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: this.credentials.clientId,
-        client_secret: this.credentials.clientSecret,
-      }),
+    const results = await this.provider.findPlaces({
+      ...request,
+      maxResults: request.maxResults || 20
     });
 
-    if (!response.ok) {
-      throw new Error(`OSDM auth failed: ${response.statusText}`);
-    }
+    return results.slice(0, request.maxResults || 20);
+  }
+}
+```
 
-    const data = await response.json();
+**File:** `packages/osdm-domain/src/usecases/SearchTrips.ts`
+```typescript
+import { TripCandidate } from '../entities/Trip';
+
+export interface TripSearchRequest {
+  originId: string;
+  destinationId: string;
+  departureDateTime: Date;
+  arrivalDateTime?: Date;
+  maxChanges?: number;
+  passengers: PassengerRequest[];
+}
+
+export interface PassengerRequest {
+  type: 'adult' | 'child' | 'senior';
+  age?: number;
+  discountCards?: string[];
+}
+
+export interface TripSearchProvider {
+  findTrips(request: TripSearchRequest): Promise<TripCandidate[]>;
+}
+
+export class SearchTripsUseCase {
+  constructor(private provider: TripSearchProvider) {}
+
+  async execute(request: TripSearchRequest): Promise<TripCandidate[]> {
+    this.validateRequest(request);
     
-    this.token = {
-      accessToken: data.access_token,
-      tokenType: data.token_type,
-      expiresIn: data.expires_in,
-      expiresAt: Date.now() + (data.expires_in * 1000) - 60000, // 1min buffer
+    const trips = await this.provider.findTrips(request);
+    
+    // Sort by departure time
+    return trips.sort((a, b) => 
+      a.departureDateTime.getTime() - b.departureDateTime.getTime()
+    );
+  }
+
+  private validateRequest(request: TripSearchRequest): void {
+    if (!request.originId || !request.destinationId) {
+      throw new Error('Origin and destination are required');
+    }
+    
+    if (request.originId === request.destinationId) {
+      throw new Error('Origin and destination must be different');
+    }
+    
+    if (request.departureDateTime < new Date()) {
+      throw new Error('Departure time must be in the future');
+    }
+    
+    if (request.passengers.length === 0) {
+      throw new Error('At least one passenger is required');
+    }
+  }
+}
+```
+
+## 📋 Day 5-6: Mock European Provider
+
+### 5.1 Provider Interface
+**File:** `packages/osdm-providers/mock-eu/src/MockEuProvider.ts`
+```typescript
+import { 
+  PlaceSearchProvider, 
+  TripSearchProvider,
+  OfferProvider,
+  BookingProvider 
+} from '@osdm/domain';
+
+export class MockEuProvider implements 
+  PlaceSearchProvider, 
+  TripSearchProvider,
+  OfferProvider,
+  BookingProvider {
+  
+  constructor() {
+    this.initializeData();
+  }
+
+  async findPlaces(request: SearchPlacesRequest): Promise<Station[]> {
+    const query = request.query.toLowerCase();
+    
+    return this.stations.filter(station => 
+      station.name.toLowerCase().includes(query) ||
+      station.country.toLowerCase().includes(query)
+    ).slice(0, request.maxResults || 20);
+  }
+
+  async findTrips(request: TripSearchRequest): Promise<TripCandidate[]> {
+    // Find service patterns connecting origin to destination
+    const patterns = this.findMatchingPatterns(request.originId, request.destinationId);
+    
+    const trips: TripCandidate[] = [];
+    
+    for (const pattern of patterns) {
+      const tripCandidates = this.generateTripsForPattern(pattern, request.departureDateTime);
+      trips.push(...tripCandidates);
+    }
+    
+    return trips;
+  }
+
+  private findMatchingPatterns(originId: string, destinationId: string): ServicePattern[] {
+    return this.servicePatterns.filter(pattern => {
+      const stops = pattern.stops.map(s => s.stationId);
+      const originIndex = stops.indexOf(originId);
+      const destIndex = stops.indexOf(destinationId);
+      
+      return originIndex >= 0 && destIndex > originIndex;
+    });
+  }
+
+  private generateTripsForPattern(pattern: ServicePattern, baseDateTime: Date): TripCandidate[] {
+    const trips: TripCandidate[] = [];
+    
+    // Generate 3 departures: base time, +2h, +4h
+    for (let i = 0; i < 3; i++) {
+      const departureTime = new Date(baseDateTime);
+      departureTime.setHours(departureTime.getHours() + (i * 2));
+      
+      trips.push(this.createTripFromPattern(pattern, departureTime));
+    }
+    
+    return trips;
+  }
+
+  private initializeData(): void {
+    this.loadCarriers();
+    this.loadStations();
+    this.loadServicePatterns();
+  }
+}
+```
+
+### 5.2 Mock European Rail Data
+**File:** `packages/osdm-providers/mock-eu/data/carriers.json`
+```json
+[
+  {
+    "id": "DB",
+    "name": "Deutsche Bahn",
+    "shortName": "DB",
+    "country": "DE",
+    "uicCompanyCode": "1080"
+  },
+  {
+    "id": "OEBB",
+    "name": "Österreichische Bundesbahnen",
+    "shortName": "ÖBB",
+    "country": "AT",
+    "uicCompanyCode": "1081"
+  },
+  {
+    "id": "SNCF",
+    "name": "Société Nationale des Chemins de fer Français",
+    "shortName": "SNCF",
+    "country": "FR",
+    "uicCompanyCode": "1087"
+  },
+  {
+    "id": "CD",
+    "name": "České dráhy",
+    "shortName": "ČD",
+    "country": "CZ",
+    "uicCompanyCode": "1054"
+  },
+  {
+    "id": "ZSSK",
+    "name": "Železničná spoločnosť Slovensko",
+    "shortName": "ZSSK",
+    "country": "SK",
+    "uicCompanyCode": "1312"
+  },
+  {
+    "id": "SBB",
+    "name": "Schweizerische Bundesbahnen",
+    "shortName": "SBB",
+    "country": "CH",
+    "uicCompanyCode": "1085"
+  }
+]
+```
+
+**File:** `packages/osdm-providers/mock-eu/data/stations.json`
+```json
+[
+  {
+    "id": "STATION_VIE",
+    "uicCode": "8100001",
+    "name": "Wien Hauptbahnhof",
+    "country": "AT",
+    "coordinates": { "latitude": 48.1853, "longitude": 16.3777 },
+    "timezone": "Europe/Vienna"
+  },
+  {
+    "id": "STATION_BA",
+    "uicCode": "5600001", 
+    "name": "Bratislava hlavná stanica",
+    "country": "SK",
+    "coordinates": { "latitude": 48.1581, "longitude": 17.1067 },
+    "timezone": "Europe/Bratislava"
+  },
+  {
+    "id": "STATION_PRG",
+    "uicCode": "5400014",
+    "name": "Praha hlavní nádraží", 
+    "country": "CZ",
+    "coordinates": { "latitude": 50.0837, "longitude": 14.4341 },
+    "timezone": "Europe/Prague"
+  },
+  {
+    "id": "STATION_MUN",
+    "uicCode": "8000261",
+    "name": "München Hauptbahnhof",
+    "country": "DE", 
+    "coordinates": { "latitude": 48.1402, "longitude": 11.5581 },
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "id": "STATION_ZUR",
+    "uicCode": "8503000",
+    "name": "Zürich Hauptbahnhof",
+    "country": "CH",
+    "coordinates": { "latitude": 47.3781, "longitude": 8.5402 },
+    "timezone": "Europe/Zurich"
+  },
+  {
+    "id": "STATION_PAR",
+    "uicCode": "8727100", 
+    "name": "Paris Gare de l'Est",
+    "country": "FR",
+    "coordinates": { "latitude": 48.8766, "longitude": 2.3589 },
+    "timezone": "Europe/Paris"
+  }
+]
+```
+
+**File:** `packages/osdm-providers/mock-eu/data/service-patterns.json`
+```json
+[
+  {
+    "id": "RJX_VIE_ZUR",
+    "name": "RailJet Wien - Zürich",
+    "carrierId": "OEBB", 
+    "vehicleType": "railjet",
+    "stops": [
+      { "stationId": "STATION_VIE", "departureOffsetMinutes": 0, "stopType": "origin" },
+      { "stationId": "STATION_SALZBURG", "arrivalOffsetMinutes": 150, "departureOffsetMinutes": 155, "stopType": "intermediate" },
+      { "stationId": "STATION_INNSBRUCK", "arrivalOffsetMinutes": 240, "departureOffsetMinutes": 245, "stopType": "intermediate" },
+      { "stationId": "STATION_ZUR", "arrivalOffsetMinutes": 420, "stopType": "destination" }
+    ],
+    "operatingDays": { "monday": true, "tuesday": true, "wednesday": true, "thursday": true, "friday": true, "saturday": true, "sunday": true }
+  },
+  {
+    "id": "EC_BA_PRG", 
+    "name": "EuroCity Bratislava - Praha",
+    "carrierId": "CD",
+    "vehicleType": "ec",
+    "stops": [
+      { "stationId": "STATION_BA", "departureOffsetMinutes": 0, "stopType": "origin" },
+      { "stationId": "STATION_BRECLAV", "arrivalOffsetMinutes": 65, "departureOffsetMinutes": 68, "stopType": "intermediate" },
+      { "stationId": "STATION_BRNO", "arrivalOffsetMinutes": 95, "departureOffsetMinutes": 98, "stopType": "intermediate" },
+      { "stationId": "STATION_PRG", "arrivalOffsetMinutes": 240, "stopType": "destination" }
+    ],
+    "operatingDays": { "monday": true, "tuesday": true, "wednesday": true, "thursday": true, "friday": true, "saturday": false, "sunday": true }
+  }
+]
+```
+
+## 📋 Day 7-8: OSDM API Implementation
+
+### 7.1 Fastify Server Setup
+**File:** `apps/osdm-api/src/server.ts`
+```typescript
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import { SearchPlacesUseCase } from '@osdm/domain';
+import { MockEuProvider } from '@osdm/providers/mock-eu';
+
+const fastify = Fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || 'info'
+  }
+});
+
+// Plugins
+fastify.register(cors, {
+  origin: true
+});
+
+fastify.register(swagger, {
+  routePrefix: '/docs',
+  swagger: {
+    info: {
+      title: 'OSDM v3.2 Compliant API',
+      description: 'Standalone OSDM distributor with mock European rail data',
+      version: '1.2.0'
+    }
+  },
+  exposeRoute: true
+});
+
+// Initialize providers
+const mockProvider = new MockEuProvider();
+const searchPlacesUseCase = new SearchPlacesUseCase(mockProvider);
+
+// Routes
+fastify.get('/health', async (request, reply) => {
+  return {
+    status: 'healthy',
+    version: '1.2.0',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  };
+});
+
+fastify.get('/places', async (request, reply) => {
+  const { query, country } = request.query as any;
+  
+  if (!query) {
+    reply.code(400);
+    return { error: 'Query parameter is required' };
+  }
+  
+  try {
+    const places = await searchPlacesUseCase.execute({
+      query,
+      country,
+      maxResults: 20
+    });
+    
+    return {
+      success: true,
+      data: places,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    reply.code(500);
+    return { 
+      error: 'Internal server error',
+      message: error.message 
     };
   }
-}
+});
 
-export { OSSDMAuth };
+// Start server
+const start = async () => {
+  try {
+    const port = parseInt(process.env.PORT || '8080');
+    const host = process.env.HOST || '0.0.0.0';
+    
+    await fastify.listen({ port, host });
+    console.log(`🚀 OSDM API server running at http://${host}:${port}`);
+    console.log(`📋 API Documentation: http://${host}:${port}/docs`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
 ```
 
-#### 3.2 HTTP Client
-**File:** `src/lib/osdm/client.ts`
+### 7.2 Core OSDM Endpoints
+**File:** `apps/osdm-api/src/routes/trips.ts`
 ```typescript
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { OSSDMAuth } from './auth';
+import { FastifyPluginAsync } from 'fastify';
+import { SearchTripsUseCase } from '@osdm/domain';
 
-interface OSSDMClientConfig {
-  apiUrl: string;
-  clientId: string;
-  clientSecret: string;
-  timeout?: number;
-  retryAttempts?: number;
-}
-
-export class OSSDMClient {
-  private client: AxiosInstance;
-  private auth: OSSDMAuth;
-  private config: OSSDMClientConfig;
-
-  constructor(config: OSSDMClientConfig) {
-    this.config = config;
-    this.auth = new OSSDMAuth({
-      clientId: config.clientId,
-      clientSecret: config.clientSecret,
-      apiUrl: config.apiUrl,
-    });
-
-    this.client = axios.create({
-      baseURL: config.apiUrl,
-      timeout: config.timeout || 30000,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'OSDM-Avantle-Agent/1.2.0',
-      },
-    });
-
-    this.setupInterceptors();
-  }
-
-  private setupInterceptors(): void {
-    // Request interceptor for auth
-    this.client.interceptors.request.use(async (config) => {
-      const token = await this.auth.getAccessToken();
-      config.headers.Authorization = `Bearer ${token}`;
-      
-      // Add tracing headers
-      config.headers['X-Request-ID'] = uuidv4();
-      config.headers['X-Correlation-ID'] = uuidv4();
-      
-      return config;
-    });
-
-    // Response interceptor for error handling
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401) {
-          // Token expired, retry once
-          try {
-            await this.auth.refreshToken();
-            return this.client.request(error.config);
-          } catch (refreshError) {
-            throw new Error('OSDM authentication failed');
+const tripsRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.post('/trips/search', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['origin', 'destination', 'departureTime'],
+        properties: {
+          origin: { type: 'string' },
+          destination: { type: 'string' },
+          departureTime: { type: 'string', format: 'date-time' },
+          passengers: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['adult', 'child', 'senior'] },
+                age: { type: 'number' }
+              }
+            },
+            default: [{ type: 'adult' }]
           }
         }
-        throw error;
       }
-    );
-  }
-
-  async searchTrips(request: TripSearchRequest): Promise<OSSDMTrip[]> {
-    const response = await this.client.post('/trips-collection', {
-      origin: { id: request.origin },
-      destination: { id: request.destination },
-      departureTime: request.departureTime,
-      passengers: Array(request.passengers).fill({ type: 'adult' }),
-      preferences: request.preferences || {},
-    });
-
-    return response.data.trips || [];
-  }
-
-  async createOffer(request: OfferCreateRequest): Promise<OSSDMOffer> {
-    const response = await this.client.post('/offers', request);
-    return response.data;
-  }
-
-  async createBooking(request: BookingCreateRequest): Promise<OSSDMBooking> {
-    const response = await this.client.post('/bookings', {
-      ...request,
-      idempotencyKey: uuidv4(),
-    });
-    return response.data;
-  }
-
-  async getBooking(bookingId: string): Promise<OSSDMBooking> {
-    const response = await this.client.get(`/bookings/${bookingId}`);
-    return response.data;
-  }
-
-  async fulfillBooking(bookingId: string): Promise<any> {
-    const response = await this.client.post(`/bookings/${bookingId}/fulfillments`);
-    return response.data;
-  }
-
-  async createRefundOffer(bookingId: string): Promise<any> {
-    const response = await this.client.post(`/bookings/${bookingId}/refund-offers`);
-    return response.data;
-  }
-
-  async createExchangeOffer(bookingId: string): Promise<any> {
-    const response = await this.client.post(`/bookings/${bookingId}/exchange-offers`);
-    return response.data;
-  }
-}
-
-// Singleton instance
-let osdmClient: OSSDMClient | null = null;
-
-export function getOSDMClient(): OSSDMClient {
-  if (!osdmClient) {
-    osdmClient = new OSSDMClient({
-      apiUrl: process.env.OSDM_BILETO_API_URL!,
-      clientId: process.env.OSDM_BILETO_CLIENT_ID!,
-      clientSecret: process.env.OSDM_BILETO_CLIENT_SECRET!,
-      timeout: parseInt(process.env.OSDM_REQUEST_TIMEOUT || '30000'),
-      retryAttempts: parseInt(process.env.OSDM_RETRY_ATTEMPTS || '3'),
-    });
-  }
-  return osdmClient;
-}
-```
-
-### Day 4-5: Error Handling & Utilities
-
-#### 4.1 Error Handler
-**File:** `src/lib/osdm/utils.ts`
-```typescript
-export class OSSDMError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode: number = 500,
-    public details?: any
-  ) {
-    super(message);
-    this.name = 'OSSDMError';
-  }
-}
-
-export function handleOSDMError(error: any): OSSDMError {
-  if (error.response) {
-    const status = error.response.status;
-    const data = error.response.data;
-    
-    switch (status) {
-      case 400:
-        return new OSSDMError(
-          'Invalid request parameters',
-          'INVALID_REQUEST',
-          400,
-          data
-        );
-      case 401:
-        return new OSSDMError(
-          'Authentication failed',
-          'AUTH_FAILED',
-          401
-        );
-      case 404:
-        return new OSSDMError(
-          'Resource not found',
-          'NOT_FOUND',
-          404
-        );
-      case 429:
-        return new OSSDMError(
-          'Rate limit exceeded',
-          'RATE_LIMIT',
-          429
-        );
-      case 500:
-        return new OSSDMError(
-          'OSDM service unavailable',
-          'SERVICE_ERROR',
-          500
-        );
-      default:
-        return new OSSDMError(
-          `OSDM API error: ${status}`,
-          'API_ERROR',
-          status,
-          data
-        );
     }
-  }
-  
-  return new OSSDMError(
-    'Network error or timeout',
-    'NETWORK_ERROR',
-    500
-  );
-}
-
-export function formatOSDMResponse<T>(data: T, meta?: any): {
-  success: boolean;
-  data: T;
-  meta?: any;
-  timestamp: string;
-} {
-  return {
-    success: true,
-    data,
-    meta,
-    timestamp: new Date().toISOString(),
-  };
-}
-```
-
-## 📋 Week 2: Core OSDM Endpoints
-
-### Day 6-7: Trip Search Endpoint
-
-#### 6.1 Create Trip Search API
-**File:** `src/app/api/osdm/trips-collection/route.ts`
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { getOSDMClient } from '@/lib/osdm/client';
-import { TripSearchRequestSchema } from '@/lib/osdm/types';
-import { handleOSDMError, formatOSDMResponse } from '@/lib/osdm/utils';
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
+  }, async (request, reply) => {
+    const { origin, destination, departureTime, passengers } = request.body as any;
     
-    // Validate request
-    const validatedRequest = TripSearchRequestSchema.parse(body);
-    
-    // Get OSDM client
-    const osdmClient = getOSDMClient();
-    
-    // Search trips
-    const trips = await osdmClient.searchTrips(validatedRequest);
-    
-    // Format response
-    return NextResponse.json(
-      formatOSDMResponse(trips, {
-        origin: validatedRequest.origin,
-        destination: validatedRequest.destination,
-        searchTime: new Date().toISOString(),
-      })
-    );
-    
-  } catch (error) {
-    console.error('Trip search error:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid request parameters', details: error.errors },
-        { status: 400 }
-      );
+    try {
+      const searchTripsUseCase = new SearchTripsUseCase(fastify.mockProvider);
+      
+      const trips = await searchTripsUseCase.execute({
+        originId: origin,
+        destinationId: destination,
+        departureDateTime: new Date(departureTime),
+        passengers: passengers || [{ type: 'adult' }]
+      });
+      
+      return {
+        success: true,
+        data: trips,
+        meta: {
+          origin,
+          destination,
+          searchTime: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      reply.code(400);
+      return {
+        error: error.message,
+        code: 'INVALID_TRIP_REQUEST'
+      };
     }
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-```
-
-### Day 8-9: Offers & Booking Endpoints
-
-#### 8.1 Offers Endpoint
-**File:** `src/app/api/osdm/offers/route.ts`
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { getOSDMClient } from '@/lib/osdm/client';
-import { OfferCreateRequestSchema } from '@/lib/osdm/types';
-import { handleOSDMError, formatOSDMResponse } from '@/lib/osdm/utils';
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const validatedRequest = OfferCreateRequestSchema.parse(body);
-    
-    const osdmClient = getOSDMClient();
-    const offer = await osdmClient.createOffer(validatedRequest);
-    
-    return NextResponse.json(formatOSDMResponse(offer));
-    
-  } catch (error) {
-    console.error('Offer creation error:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid request parameters', details: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-```
-
-#### 8.2 Bookings Endpoint
-**File:** `src/app/api/osdm/bookings/route.ts`
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { getOSDMClient } from '@/lib/osdm/client';
-import { BookingCreateRequestSchema } from '@/lib/osdm/types';
-import { handleOSDMError, formatOSDMResponse } from '@/lib/osdm/utils';
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const validatedRequest = BookingCreateRequestSchema.parse(body);
-    
-    const osdmClient = getOSDMClient();
-    const booking = await osdmClient.createBooking(validatedRequest);
-    
-    return NextResponse.json(
-      formatOSDMResponse(booking),
-      { status: 201 }
-    );
-    
-  } catch (error) {
-    console.error('Booking creation error:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid request parameters', details: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const bookingId = searchParams.get('id');
-    
-    if (!bookingId) {
-      return NextResponse.json(
-        { error: 'Booking ID is required' },
-        { status: 400 }
-      );
-    }
-    
-    const osdmClient = getOSDMClient();
-    const booking = await osdmClient.getBooking(bookingId);
-    
-    return NextResponse.json(formatOSDMResponse(booking));
-    
-  } catch (error) {
-    console.error('Booking retrieval error:', error);
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-```
-
-### Day 10: After-sales Endpoints
-
-#### 10.1 Dynamic Route for Booking Operations
-**File:** `src/app/api/osdm/bookings/[id]/fulfillments/route.ts`
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { getOSDMClient } from '@/lib/osdm/client';
-import { handleOSDMError, formatOSDMResponse } from '@/lib/osdm/utils';
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const bookingId = params.id;
-    
-    const osdmClient = getOSDMClient();
-    const fulfillment = await osdmClient.fulfillBooking(bookingId);
-    
-    return NextResponse.json(
-      formatOSDMResponse(fulfillment),
-      { status: 201 }
-    );
-    
-  } catch (error) {
-    console.error('Fulfillment error:', error);
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-```
-
-**File:** `src/app/api/osdm/bookings/[id]/refund-offers/route.ts`
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { getOSDMClient } from '@/lib/osdm/client';
-import { handleOSDMError, formatOSDMResponse } from '@/lib/osdm/utils';
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const bookingId = params.id;
-    
-    const osdmClient = getOSDMClient();
-    const refundOffer = await osdmClient.createRefundOffer(bookingId);
-    
-    return NextResponse.json(
-      formatOSDMResponse(refundOffer),
-      { status: 201 }
-    );
-    
-  } catch (error) {
-    console.error('Refund offer error:', error);
-    
-    const osdmError = handleOSDMError(error);
-    return NextResponse.json(
-      { error: osdmError.message, code: osdmError.code },
-      { status: osdmError.statusCode }
-    );
-  }
-}
-```
-
-## 🧪 Testing Strategy
-
-### Unit Tests
-```typescript
-// __tests__/osdm/client.test.ts
-import { OSSDMClient } from '@/lib/osdm/client';
-
-describe('OSSDMClient', () => {
-  test('should search trips successfully', async () => {
-    // Mock implementation
   });
-  
-  test('should handle authentication errors', async () => {
-    // Mock implementation
+};
+
+export default tripsRoutes;
+```
+
+## 📋 Day 9-10: Testing & Docker
+
+### 9.1 End-to-End Test Scenarios
+**File:** `apps/osdm-api/tests/e2e/booking-flow.test.ts`
+```typescript
+import { build } from '../helper';
+
+describe('OSDM Booking Flow E2E Tests', () => {
+  let app;
+
+  beforeAll(async () => {
+    app = await build({ t: { test: true } });
+  });
+
+  afterAll(() => app.close());
+
+  describe('Scenario 1: Bratislava → Wien', () => {
+    let tripSearchResponse;
+    let selectedTrip;
+    let offerResponse;
+    let bookingResponse;
+
+    test('1.1 Search places - find Bratislava station', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/places?query=Bratislava'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.payload);
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].name).toContain('Bratislava');
+    });
+
+    test('1.2 Search trips Bratislava → Wien', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trips/search',
+        payload: {
+          origin: 'STATION_BA',
+          destination: 'STATION_VIE', 
+          departureTime: new Date(Date.now() + 24*60*60*1000).toISOString(),
+          passengers: [{ type: 'adult' }]
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      tripSearchResponse = JSON.parse(response.payload);
+      expect(tripSearchResponse.success).toBe(true);
+      expect(tripSearchResponse.data.length).toBeGreaterThan(0);
+      
+      selectedTrip = tripSearchResponse.data[0];
+      expect(selectedTrip.originId).toBe('STATION_BA');
+      expect(selectedTrip.destinationId).toBe('STATION_VIE');
+    });
+
+    test('1.3 Create offer for selected trip', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/offers',
+        payload: {
+          tripId: selectedTrip.id,
+          passengers: [{ type: 'adult' }]
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      offerResponse = JSON.parse(response.payload);
+      expect(offerResponse.success).toBe(true);
+      expect(offerResponse.data.products).toHaveLength(4); // STANDARD, FLEX, FIRST, SPAR
+    });
+
+    test('1.4 Create booking from offer', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/bookings',
+        payload: {
+          offerId: offerResponse.data.id,
+          passengers: [
+            {
+              firstName: 'Jan',
+              lastName: 'Novák',
+              email: 'jan.novak@example.com'
+            }
+          ],
+          contactInfo: {
+            email: 'jan.novak@example.com'
+          }
+        }
+      });
+
+      expect(response.statusCode).toBe(201);
+      bookingResponse = JSON.parse(response.payload);
+      expect(bookingResponse.success).toBe(true);
+      expect(bookingResponse.data.status).toBe('confirmed');
+    });
+
+    test('1.5 Generate fulfillments (tickets)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/bookings/${bookingResponse.data.id}/fulfillments`
+      });
+
+      expect(response.statusCode).toBe(201);
+      const fulfillmentResponse = JSON.parse(response.payload);
+      expect(fulfillmentResponse.success).toBe(true);
+      expect(fulfillmentResponse.data.tickets).toBeDefined();
+    });
+
+    test('1.6 Process refund (STANDARD product allows partial refund)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/bookings/${bookingResponse.data.id}/after-sales`,
+        payload: {
+          type: 'refund',
+          reason: 'Customer request'
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const refundResponse = JSON.parse(response.payload);
+      expect(refundResponse.success).toBe(true);
+      expect(refundResponse.data.refundAmount).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Scenario 2: Wien → München (RailJet)', () => {
+    // Similar test structure for Wien → München journey
+  });
+
+  describe('Scenario 3: Praha → Zürich (Multi-carrier with change)', () => {
+    // Test multi-carrier journey with connection
   });
 });
 ```
 
-### Integration Tests
-```typescript
-// __tests__/api/osdm/trips.test.ts
-import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/osdm/trips-collection/route';
+### 9.2 Docker Setup
+**File:** `infra/docker-compose.yml`
+```yaml
+version: '3.8'
 
-describe('/api/osdm/trips-collection', () => {
-  test('should return trips for valid request', async () => {
-    // Mock request and test
-  });
-});
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: osdm_platform
+      POSTGRES_USER: osdm
+      POSTGRES_PASSWORD: osdm_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osdm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  osdm-api:
+    build:
+      context: ../
+      dockerfile: apps/osdm-api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://osdm:osdm_password@postgres:5432/osdm_platform
+      NODE_ENV: production
+      PORT: 8080
+      LOG_LEVEL: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
 ```
 
-## 📊 Success Criteria
+**File:** `apps/osdm-api/Dockerfile`
+```dockerfile
+FROM node:18-alpine
 
-✅ **Week 1 Completion:**
-- [ ] Bileto OSDM API credentials configured
-- [ ] TypeScript types implemented for OSDM v3.2
-- [ ] HTTP client with authentication working
-- [ ] Error handling and utilities functional
+WORKDIR /app
 
-✅ **Week 2 Completion:**
-- [ ] All 6 core OSDM endpoints implemented
-- [ ] Request validation with Zod schemas
-- [ ] Proper error handling and response formatting
-- [ ] Basic integration tests passing
+# Copy workspace config
+COPY package*.json ./
+COPY packages ./packages
+COPY apps/osdm-api ./apps/osdm-api
 
-✅ **Phase 1 Done (v1.2.0):**
-- [ ] Full OSDM API proxy layer functional
-- [ ] Real trip search working with Bileto sandbox
-- [ ] Complete booking flow (search → offer → booking → fulfillment)
-- [ ] Production-ready error handling and logging
+# Install dependencies
+RUN npm ci --only=production
+
+# Build application
+RUN npm run build -w apps/osdm-api
+
+# Generate Prisma client
+RUN npx prisma generate --schema=apps/osdm-api/prisma/schema.prisma
+
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["npm", "start", "-w", "apps/osdm-api"]
+```
+
+### 9.3 Environment Configuration
+**File:** `apps/osdm-api/.env.example`
+```bash
+# Database
+DATABASE_URL=postgresql://osdm:osdm_password@localhost:5432/osdm_platform
+
+# Server
+NODE_ENV=development
+PORT=8080
+HOST=0.0.0.0
+LOG_LEVEL=debug
+
+# OSDM Configuration  
+OSDM_VERSION=3.2.0
+OSDM_MODE=distributor
+OSDM_PROVIDER=mock-eu
+
+# Mock Data Configuration
+MOCK_CARRIERS_COUNT=6
+MOCK_STATIONS_COUNT=50
+MOCK_DAILY_DEPARTURES=3
+MOCK_PRICE_BASE_EUR=0.15
+
+# Security
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+ENCRYPTION_KEY=your-32-char-encryption-key-here
+
+# Monitoring
+ENABLE_METRICS=true
+ENABLE_TRACING=true
+```
+
+## 📊 Phase 1 Success Criteria
+
+### ✅ Technical Implementation
+- [ ] **OSDM 3.2 Compliance**: All 9 endpoints fully implemented per spec
+  - [ ] `GET /places` - Place search
+  - [ ] `POST /trips/search` - Trip search  
+  - [ ] `POST /offers` - Travel offers creation
+  - [ ] `POST /availabilities` - Capacity check
+  - [ ] `POST /bookings` - Booking creation
+  - [ ] `GET /bookings/{id}` - Booking retrieval
+  - [ ] `POST /bookings/{id}/fulfillments` - Ticket generation
+  - [ ] `POST /bookings/{id}/after-sales` - Refunds/exchanges
+  - [ ] `GET /health` - Health check
+
+### ✅ Mock European Rail Network
+- [ ] **6 Carriers**: DB, ÖBB, SNCF, ČD, ZSSK, SBB
+- [ ] **50+ Stations**: Major European hubs with realistic data
+- [ ] **6 Service Patterns**: Cross-border routes (RJX, EC, IC, TGV, ICE)
+- [ ] **4 Products**: STANDARD, FLEX, FIRST, SPAR with different rules
+- [ ] **Realistic Pricing**: Distance-based + product multipliers
+- [ ] **After-sales Rules**: Product-specific refund/exchange policies
+
+### ✅ Provider Architecture
+- [ ] **Clean Domain Layer**: Entities + use cases independent of OSDM
+- [ ] **Provider Abstraction**: Interface ready for GTFS/carrier integration
+- [ ] **Mock Provider**: Complete implementation with European rail data
+- [ ] **OSDM Mapping**: Domain models ↔ OSDM v3.2 JSON schemas
+
+### ✅ Complete Booking Flow
+- [ ] **Search → Offer → Booking → Fulfillment → After-sales**
+- [ ] **3 E2E Test Scenarios**: BA→VIE, VIE→MUN, PRG→ZUR working
+- [ ] **Error Handling**: Proper HTTP codes + OSDM-compliant error format
+- [ ] **Validation**: Zod schemas for all request/response validation
+
+### ✅ Container Deployment
+- [ ] **Docker Compose**: `docker-compose up` starts working system
+- [ ] **Postgres**: Database with Prisma migrations
+- [ ] **Health Checks**: All services properly monitored
+- [ ] **Environment Config**: Production-ready configuration
 
 ## 🚀 Deployment Checklist
 
-- [ ] Environment variables set in Vercel
-- [ ] Build and type-check passing
-- [ ] API endpoints returning expected responses
-- [ ] Authentication flow working
-- [ ] Error handling tested
-- [ ] Version incremented to 1.2.0
-- [ ] Git tag created and pushed
-- [ ] Documentation updated
+### Development Environment
+```bash
+# 1. Setup monorepo
+cd osdm-platform
+npm install
+
+# 2. Generate OpenAPI types
+npm run codegen
+
+# 3. Start database
+npm run docker:up postgres
+
+# 4. Run migrations
+npm run db:migrate
+
+# 5. Start API server
+npm run dev:api
+
+# 6. Test endpoints
+curl http://localhost:8080/health
+curl "http://localhost:8080/places?query=Bratislava"
+```
+
+### Production Deployment
+```bash
+# 1. Build all packages
+npm run build
+
+# 2. Run tests
+npm test
+
+# 3. Start full stack
+npm run docker:up
+
+# 4. Verify deployment
+curl http://localhost:8080/health
+```
 
 ---
 
-**Next Phase:** Upon completion, proceed to Phase 2 (Multi-Carrier Platform v1.3.0) with carrier management and booking orchestration.
+**Success Definition**: When `docker-compose up` results in a working OSDM 3.2 compliant API that can handle the complete booking flow for European rail journeys, with all endpoints returning proper responses and 3 test scenarios passing.
+
+**Next Phase**: Upon completion, proceed to Phase 2 (Provider Ecosystem v1.3.0) with GTFS integration and multiple provider orchestration.

@@ -11,20 +11,37 @@ Tento súbor poskytuje kontext pre Claude Code pri práci s OSDM Agent repozitá
 
 ### Architektúra platformy
 
-**Dual-component architektúra podobná DPO Studio:**
+**Standalone OSDM 3.2 Compliant API Architecture:**
 
-1. **OSDM Studio** (admin vrstva) - **PLÁNOVANÉ**
-   - Doména: `osdmstudio.ai` (plánované)
-   - Funkcie: onboarding dopravcov, správa taríf, route management, reporting, whitelabel konfigurácie
+**OSDM.avantle.ai** (distribútor/sandbox engine) - **TENTO REPOZITÁR**
+- Doména: `osdm.avantle.ai`
+- Repo: `avantlehq/osdm-avantle-ai`
+- **Core Function**: Standalone OSDM 3.2 compliant distributor API
+- **Architecture**: Clean separation medzi domain/providers/api layers
+- **Provider Strategy**: Mock EU data s pluggable provider abstraction
+- **Future Integration**: GTFS adapters, real carrier APIs (DB, SNCF, ÖBB, etc.)
 
-2. **OSDM.avantle.ai** (agent/runtime engine) - **TENTO REPOZITÁR**
-   - Doména: `osdm.avantle.ai`
-   - Repo: `avantlehq/osdm-avantle-ai`
-   - Funkcie: trip planning, booking engine, payment processing, ticket validation, journey management
-   - Multi-tenant architektúra pre izolované dáta dopravcov
+**Budúca integrácia s OSDM Studio:**
+- OSDM Studio bude konzumovať tento API ako štandardný OSDM distributor
+- Multi-tenant carrier management cez provider abstraction
+- Whitelabel konfigurácie cez API gateway layer
 
-### API rozhranie (poskytované týmto repozitárom)
+### API rozhranie (OSDM 3.2 Compliant)
 
+**Core OSDM API Endpoints:**
+```
+GET /places                           → place search (stations)
+POST /trips/search                    → trip search
+POST /offers                         → travel offers creation
+POST /availabilities                 → capacity check
+POST /bookings                       → booking creation
+GET /bookings/{id}                   → booking retrieval
+POST /bookings/{id}/fulfillments     → ticket generation
+POST /bookings/{id}/after-sales      → refunds/exchanges
+GET /health                          → health check
+```
+
+**Legacy Mock Endpoints (Phase 0):**
 ```
 POST /api/provision → vytvorenie tenanta dopravcu
 POST /api/v1/engine/scan → vyhľadávanie spojení a ciest
@@ -48,7 +65,7 @@ Tento agent bude konzumovaný OSDM Studio pre:
 - Pricing and availability analysis cez `/api/v1/engine/analyze`
 - Booking and journey reports cez `/api/v1/report/security`
 
-## Aktuálny stav repozitára (v1.1.1)
+## Aktuálny stav repozitára (v1.1.2 → v1.2.0)
 
 ### ✅ Hotové komponenty
 
@@ -81,14 +98,20 @@ src/app/api/
 
 ### 🔧 Technické detaily
 
-**Tech stack:**
+**Tech stack (Phase 1 - v1.2.0):**
+- **Backend**: Node.js + TypeScript + Fastify (or Express)
+- **Database**: Postgres s Prisma ORM
+- **API Generation**: OpenAPI generator z OSDM 3.2 spec
+- **Architecture**: Monorepo s clean domain/provider separation
+- **Package manager**: npm (default)
+- **CI/CD**: GitHub Actions
+- **Deployment**: Docker containers
+- **API Standard**: OSDM v3.2 distributor mode
+
+**Legacy Next.js stack (Phase 0):**
 - Framework: Next.js 16 s App Router
 - Styling: Tailwind CSS v4
-- TypeScript: Plná type safety
-- Package manager: npm (default)
-- CI/CD: GitHub Actions
 - Deployment: Vercel ready
-- API: REST s JWT auth (pripravené)
 
 **Security konfigurácia:**
 - Multi-tenant carrier isolation (pripravené)
@@ -189,10 +212,11 @@ POST /bookings/{id}/exchange-offers → výmena lístkov
 - Asynchronous a synchronous fulfillment
 - Comprehensive error handling
 
-**Integration Strategy:**
-- **Bileto OSDM API Sandbox** - Production-ready testing environment
-- **Real-world data** - Czech/European rail routes
-- **OSDM v3.2 compliance** - Guaranteed standard compatibility
+**Integration Strategy (Updated):**
+- **Standalone OSDM API** - Own controlled distributor sandbox
+- **Mock European rail data** - 6 carriers, ~50 stations, cross-border routes
+- **Provider abstraction** - Later plug GTFS, Bileto, direct carrier APIs
+- **OSDM v3.2 compliance** - Generated from official OpenAPI spec
 
 ### 📋 Ďalšie kroky (budúce implementácie)
 
@@ -200,20 +224,32 @@ POST /bookings/{id}/exchange-offers → výmena lístkov
 
 ### Immediate Implementation Steps
 
-**📁 Required Files Structure:**
+**📁 Monorepo Structure (Phase 1):**
 ```
-src/
-├── lib/osdm/
-│   ├── client.ts         # OSDM HTTP client with auth
-│   ├── types.ts          # Zod schemas & validation
-│   ├── auth.ts           # Token management
-│   └── utils.ts          # Error handling & formatting
-├── app/api/osdm/         # OSDM-compliant endpoints
-│   ├── trips-collection/route.ts
-│   ├── offers/route.ts
-│   ├── bookings/route.ts
-│   └── bookings/[id]/fulfillments/route.ts
-└── types/osdm.ts         # TypeScript interfaces
+osdm-platform/
+  apps/
+    osdm-api/             # Fastify API server
+      src/
+        routes/           # OSDM endpoint implementations
+        controllers/      # Generated OpenAPI controllers
+        middleware/       # Auth, validation, logging
+        server.ts         # Fastify server setup
+  packages/
+    osdm-domain/          # Clean domain model
+      entities/           # Station, Carrier, Trip, Booking
+      usecases/           # searchPlaces, searchTrips, etc.
+      repositories/       # Provider interface definitions
+    osdm-providers/
+      mock-eu/            # Mock European rail provider
+        data/             # Static carriers, stations, patterns
+        adapter.ts        # ProviderAdapter implementation
+    osdm-schema/          # Generated TypeScript from OpenAPI
+  spec/
+    OSDM-online-api-v3.2.0.yml
+  infra/
+    docker-compose.yml    # Postgres + API
+    prisma/
+      schema.prisma       # Database schema
 ```
 
 **🔧 Key Implementation Components:**
@@ -252,11 +288,12 @@ src/
 **📋 Detailed Implementation:** See [PHASE1-DETAIL.md](./PHASE1-DETAIL.md) for complete step-by-step guide.
 
 ### Phase 1 Success Metrics
-- [ ] **Bileto Integration:** Functional API connection s authentication
-- [ ] **OSDM Compliance:** All 6 core endpoints implemented
-- [ ] **Error Handling:** Proper validation a error responses  
-- [ ] **Testing:** Unit tests a integration tests passing
-- [ ] **Documentation:** API documentation a usage examples
+- [ ] **OSDM 3.2 Compliance:** All 9 core endpoints fully implemented
+- [ ] **Mock European Rail:** 6 carriers, 50+ stations, cross-border routes
+- [ ] **Provider Architecture:** Clean abstraction pre future GTFS/carrier integration
+- [ ] **End-to-End Testing:** 3 booking scenarios (BA→VIE, VIE→MUN, PRG→ZUR)
+- [ ] **Container Deployment:** Docker setup s Postgres
+- [ ] **OpenAPI Tooling:** Generated types + validation from official spec
 
 ### Next Development Phases
 
@@ -320,6 +357,28 @@ Založené na open transport standards a AI-enhanced user experience.
 
 ## Development commands
 
+**Phase 1 (Monorepo Backend):**
+```bash
+# Development (z osdm-platform/)
+npm run dev:api      # Start OSDM API server (http://localhost:8080)
+npm run build        # Build all packages
+npm run test         # Run integration tests
+npm run lint         # Run ESLint
+npm run type-check   # TypeScript checking
+npm run codegen      # Generate types from OpenAPI spec
+npm run db:migrate   # Run Prisma migrations
+npm run docker:up    # Start with Docker Compose
+
+# API Testing (OSDM 3.2 Compliant)
+GET  http://localhost:8080/places?query=Bratislava
+POST http://localhost:8080/trips/search
+POST http://localhost:8080/offers
+POST http://localhost:8080/bookings
+GET  http://localhost:8080/bookings/{id}
+POST http://localhost:8080/bookings/{id}/fulfillments
+```
+
+**Legacy Commands (Phase 0):**
 ```bash
 # Development (z avantlehq/osdm-avantle-ai/)
 npm run dev          # Start dev server (http://localhost:3000)
