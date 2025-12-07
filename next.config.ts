@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Remove turbopack lockfile warning by setting explicit root
-  // This resolves the multiple lockfile detection issue in CI
-  turbopack: {
-    root: __dirname,
-  },
+  // Empty config - remove all experimental settings that might cause CI issues
 };
 
 export default nextConfig;
