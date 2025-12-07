@@ -21,36 +21,19 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 9
-
-    - name: Get pnpm store directory
-      shell: bash
-      run: |
-        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-    - name: Setup pnpm cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.STORE_PATH }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
+        cache: 'npm'
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
 
     - name: Build
-      run: pnpm build
+      run: npm run build
 
     - name: Lint
-      run: pnpm lint
+      run: npm run lint
 
     - name: Type check
-      run: pnpm type-check || echo "Type check not configured"
+      run: npm run type-check || echo "Type check not configured"
 
     - name: Test
-      run: pnpm test || echo "Tests not configured"
+      run: npm test || echo "Tests not configured"
