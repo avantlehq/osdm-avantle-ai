@@ -4,7 +4,10 @@ Tento súbor poskytuje kontext pre Claude Code pri práci s OSDM Agent repozitá
 
 ## Kontext projektu OSDM.avantle.ai
 
-**OSDM.avantle.ai** je AI-powered platforma pre Open Source Dependency Management, ktorá poskytuje komplexnú analýzu bezpečnosti, compliance a správy závislostí pre softvérové projekty.
+**OSDM.avantle.ai** je AI-powered implementácia **Open Sales and Distribution Model** pre verejnú dopravu. OSDM má dva hlavné ciele:
+
+1. **Podstatne zjednodušiť a zlepšiť proces rezervácie** pre zákazníkov ciest verejnou dopravou
+2. **Znížiť zložitosť a distribučné náklady** pre predajcov, distribútorov a dopravcov
 
 ### Architektúra platformy
 
@@ -12,37 +15,38 @@ Tento súbor poskytuje kontext pre Claude Code pri práci s OSDM Agent repozitá
 
 1. **OSDM Studio** (admin vrstva) - **PLÁNOVANÉ**
    - Doména: `osdmstudio.ai` (plánované)
-   - Funkcie: onboarding, správa projektov, dashboards, reporting, whitelabel konfigurácie
+   - Funkcie: onboarding dopravcov, správa taríf, route management, reporting, whitelabel konfigurácie
 
 2. **OSDM.avantle.ai** (agent/runtime engine) - **TENTO REPOZITÁR**
    - Doména: `osdm.avantle.ai`
    - Repo: `avantlehq/osdm-avantle-ai`
-   - Funkcie: dependency scanning, vulnerability analysis, license compliance, security reporting
-   - Multi-tenant architektúra pre izolované úložiská projektov
+   - Funkcie: trip planning, booking engine, payment processing, ticket validation, journey management
+   - Multi-tenant architektúra pre izolované dáta dopravcov
 
 ### API rozhranie (poskytované týmto repozitárom)
 
 ```
-POST /api/provision → vytvorenie tenanta/projektu
-POST /api/v1/engine/scan → skenering závislostí
-POST /api/v1/engine/analyze → analýza bezpečnosti a compliance
-POST /api/v1/report/security → generovanie bezpečnostných reportov
+POST /api/provision → vytvorenie tenanta dopravcu
+POST /api/v1/engine/scan → vyhľadávanie spojení a ciest
+POST /api/v1/engine/analyze → analýza cien a dostupnosti
+POST /api/v1/report/security → generovanie booking reportov
 ```
 
 **Guardrails:**
-- Authorization: Bearer <JWT> s tenant_id, project_id, role, exp
-- Rate limit per tenant/project
+- Authorization: Bearer <JWT> s carrier_id, tenant_id, role, exp
+- Rate limit per dopravca/tenant
 - SQLite (dev) / Postgres (prod)
-- Žiadne PII v logoch
-- Bezpečné ukladanie SBOM dát
+- GDPR compliant passenger data handling
+- PCI DSS compliance pre payment processing
+- Bezpečné ukladanie osobných údajov cestujúcich
 
 ### Integrácia s budúcou admin platformou
 
 Tento agent bude konzumovaný OSDM Studio pre:
-- Project/tenant provisioning cez `/api/provision`
-- Dependency scanning cez `/api/v1/engine/scan`
-- Security analysis cez `/api/v1/engine/analyze`
-- Security report generation cez `/api/v1/report/security`
+- Carrier/tenant provisioning cez `/api/provision`
+- Trip search and planning cez `/api/v1/engine/scan`
+- Pricing and availability analysis cez `/api/v1/engine/analyze`
+- Booking and journey reports cez `/api/v1/report/security`
 
 ## Aktuálny stav repozitára
 
@@ -71,8 +75,8 @@ src/app/api/
 ```
 
 **UI Components:**
-- Landing page (src/app/page.tsx) - agent status a API overview pre OSDM
-- Agent Shell (src/app/agent/page.tsx) - monitoring UI pre dependency scanning
+- Landing page (src/app/page.tsx) - agent status a API overview pre OSDM transport
+- Agent Shell (src/app/agent/page.tsx) - monitoring UI pre booking engine
 
 ### 🔧 Technické detaily
 
@@ -86,12 +90,12 @@ src/app/api/
 - API: REST s JWT auth (pripravené)
 
 **Security konfigurácia:**
-- Multi-tenant project isolation (pripravené)
-- Rate limiting per tenant/project (pripravené)
+- Multi-tenant carrier isolation (pripravené)
+- Rate limiting per carrier/tenant (pripravené)
 - JWT authentication guardrails
 - Security headers v vercel.json
-- SBOM data encryption
-- Vulnerability database access controls
+- PCI DSS compliance pre payment data
+- GDPR compliant passenger data handling
 
 **Environment variables:**
 ```bash
@@ -105,10 +109,10 @@ RATE_LIMIT_MAX_REQUESTS=100
 RATE_LIMIT_WINDOW_MS=900000
 LOG_LEVEL=info
 ENCRYPTION_KEY=
-VULNERABILITY_DB_URL=
-SBOM_SCANNER_ENDPOINT=
-LICENSE_DB_API_KEY=
-SECURITY_ADVISORY_API_KEY=
+TRANSPORT_API_KEY=
+GTFS_FEED_URL=
+PAYMENT_GATEWAY_API_KEY=
+CARRIER_REGISTRY_URL=
 ```
 
 ### 🚀 Deployment status
@@ -129,68 +133,68 @@ SECURITY_ADVISORY_API_KEY=
 
 **Mock endpoints pripravené:**
 
-1. **Dependency Scanning** (`POST /api/v1/engine/scan`):
-   - Input: repository URL/path, scan configuration
-   - Output: scan results s vulnerability counts, license compliance, outdated packages
-   - TODO: Implementovať skutočný SBOM scanner (Syft, SPDX)
+1. **Trip Search** (`POST /api/v1/engine/scan`):
+   - Input: origin, destination, departure time, preferences
+   - Output: available routes, schedules, carriers, journey options
+   - TODO: Implementovať skutočný GTFS feed processing a route planning
 
-2. **Security Analysis** (`POST /api/v1/engine/analyze`):
-   - Input: dependencies data, analysis type
-   - Output: security recommendations, risk scoring, compliance analysis
-   - TODO: Implementovať LLM-powered analýzu s CVE database
+2. **Price & Availability Analysis** (`POST /api/v1/engine/analyze`):
+   - Input: selected routes, passenger details, booking preferences
+   - Output: pricing options, availability, booking recommendations
+   - TODO: Implementovať LLM-powered pricing optimization a dynamic pricing
 
-3. **Security Reporting** (`POST /api/v1/report/security`):
-   - Input: scan data, report type
-   - Output: formatted security reports (JSON, PDF, HTML)
-   - TODO: Implementovať report template engine
+3. **Booking Reports** (`POST /api/v1/report/security`):
+   - Input: booking data, report type, period
+   - Output: formatted booking reports, analytics, revenue data
+   - TODO: Implementovať report template engine pre dopravcov
 
-4. **Project Provisioning** (`POST /api/provision`):
-   - Input: tenantId, project name, configuration
-   - Output: provision status, API endpoints
-   - TODO: Implementovať skutočné project isolation
+4. **Carrier Provisioning** (`POST /api/provision`):
+   - Input: carrierId, organization name, service areas
+   - Output: provision status, API endpoints, tenant configuration
+   - TODO: Implementovať skutočné carrier isolation a onboarding
 
 ### 📋 Ďalšie kroky (budúce implementácie)
 
-**Core scanning engine:**
-1. SBOM generator integrácia (Syft, CycloneDX)
-2. CVE database connector (NVD, OSV, Snyk)
-3. License compliance engine (SPDX, ClearlyDefined)
-4. Dependency graph analysis
-5. Supply chain security checks
-6. Container image scanning
+**Core booking engine:**
+1. GTFS-RT feed processing (real-time transit data)
+2. Multi-modal journey planning (bus, train, metro, ferry)
+3. Dynamic pricing engine s revenue optimization
+4. Payment processing integration (Stripe, PayPal, local)
+5. Ticket validation a mobile ticket generation
+6. Customer notification system (SMS, email, push)
 
-**AI-powered analysis:**
-1. LLM pipeline pre dependency risk assessment
-2. Automated vulnerability impact analysis
-3. Fix recommendation engine
-4. License conflict detection
-5. Security policy compliance checking
+**AI-powered optimization:**
+1. LLM pipeline pre intelligent trip recommendations
+2. Dynamic pricing based na demand patterns
+3. Route optimization pre efficient connections
+4. Passenger flow prediction a capacity management
+5. Real-time disruption handling a rerouting
 
 **Advanced features:**
-- SBOM diff analysis (version comparisons)
-- Continuous monitoring webhooks
-- Integration s CI/CD pipeline
-- Custom security policies
-- Remediation workflow automation
-- Threat intelligence feeds
+- Real-time journey tracking a updates
+- Multi-carrier booking v single transaction
+- Loyalty program integration
+- Carbon footprint calculation
+- Accessibility routing pre disabled passengers
+- Group booking optimization
 
-**Reporting & visualization:**
-- Interactive security dashboards
-- Compliance audit reports
-- Executive summary reports
-- Trend analysis over time
-- Integration s security tools (SIEM, ticketing)
+**Reporting & analytics:**
+- Interactive booking dashboards pre dopravcov
+- Revenue analytics a forecasting
+- Passenger behavior insights
+- Route performance metrics
+- Integration s carrier management systems
 
 ### 🎯 Technologická vízia
 
 OSDM Agent má byť centrálne jadro pre:
-- **Enterprise-ready**: On-premise deployment s air-gap support
-- **CI/CD native**: Seamless integrácia do development workflows
-- **Policy-driven**: Custom security a compliance polície
-- **Real-time**: Continuous monitoring a alerting
-- **Standards-compliant**: SBOM, SPDX, CycloneDX, SWID support
+- **Carrier-agnostic**: Support pre všetkých dopravcov v regióne
+- **Standards-compliant**: GTFS, GTFS-RT, NeTEx, SIRI compliance
+- **Real-time**: Live updates pre schedules, delays, cancellations
+- **Multi-modal**: Seamless booking across different transport types
+- **Mobile-first**: Native mobile app support s offline capabilities
 
-Založené na industry-standard tools a AI-enhanced analysis.
+Založené na open transport standards a AI-enhanced user experience.
 
 ## Lokálna cesta
 
@@ -218,24 +222,26 @@ git push origin main # Trigger CI build
 
 ## OSDM-specific functionality
 
-**Dependency Management Features:**
-- Multi-language support (NPM, Maven, PyPI, Go modules, Cargo, etc.)
-- SBOM generation a parsing
-- Vulnerability scanning s CVE matching
-- License analysis a compliance checking
-- Supply chain security analysis
-- Dependency update recommendations
+**Transport Booking Features:**
+- Multi-modal trip planning (bus, train, tram, metro, ferry)
+- GTFS feed processing a real-time updates
+- Dynamic pricing a revenue optimization
+- Payment gateway integration
+- Digital ticket generation a validation
+- Journey tracking a notifications
 
-**Security Analysis:**
-- Risk scoring based na CVSS, EPSS
-- Exploit availability detection
-- Malicious package detection
-- Typosquatting analysis
-- Known attack pattern matching
+**Route Planning & Optimization:**
+- AI-powered trip recommendations
+- Real-time schedule updates
+- Accessibility-aware routing
+- Carbon footprint calculation
+- Multi-carrier journey optimization
+- Disruption handling a rerouting
 
-**Compliance & Governance:**
-- Custom policy engine
-- Regulatory compliance checking (SOC2, ISO27001)
-- License compatibility matrix
-- Approval workflow integration
-- Audit trail maintenance
+**Carrier Management:**
+- Multi-tenant carrier isolation
+- Revenue sharing calculations
+- Service area management
+- Fleet capacity optimization
+- Performance analytics
+- Compliance reporting (EU transport regulations)
