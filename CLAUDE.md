@@ -9,6 +9,59 @@ Tento súbor poskytuje kontext pre Claude Code pri práci s OSDM Agent repozitá
 1. **Podstatne zjednodušiť a zlepšiť proces rezervácie** pre zákazníkov ciest verejnou dopravou
 2. **Znížiť zložitosť a distribučné náklady** pre predajcov, distribútorov a dopravcov
 
+## 🎨 **Avantle.ai Unified Styling System**
+
+**⚠️ MANDATORY: Používaj jednotný Avantle.ai styling guide implementovaný v `src/app/globals.css`**
+
+Projekt využíva unifikovaný styling system z DPIA projektu, adaptovaný pre OSDM transport domain:
+
+### **OSDM Transport Color System**
+```css
+/* OSDM-specific category colors */
+--color-blue: #4A90E2;    /* Main/Dashboard */
+--color-green: #7ED321;   /* Trip Search/Booking */
+--color-orange: #F5A623;  /* Pricing/Offers */
+--color-red: #FF6B6B;     /* After-sales/Refunds */
+--color-purple: #9B59B6;  /* Settings/Export */
+--color-gray: #A9A9A9;    /* Carriers/Neutral */
+
+/* Standardized opacity variables */
+--border-opacity: 0.3;     /* 30% for border accents */
+--icon-opacity: 0.15;      /* 15% for icon backgrounds */
+--hover-opacity: 0.25;     /* 25% for hover states */
+--underline-opacity: 0.4;  /* 40% for underline accents */
+```
+
+### **Ultra-soft Dark Theme (RGB 25,39,52)**
+- **Background**: `#192734` - professional transport industry theme
+- **Cards**: `#1F2D3A` - subtle elevation for booking components
+- **Borders**: `#2F404E` - refined contrast for clear UI separation
+- **Inter font family** - modern, professional typography
+
+### **Component Styling Rules**
+```tsx
+// ✅ CORRECT - Clean Tailwind utilities
+<Card className="avantle-border bg-card backdrop-blur-sm border-l-4 border-l-osdm-green shadow-sm hover:shadow-md transition-shadow">
+
+// ✅ CORRECT - Category color integration
+<div className="p-2 rounded-lg bg-icon-green hover:bg-icon-green-hover transition-colors">
+  <Icon style={{ color: 'var(--color-green)' }} />
+</div>
+
+// ❌ WRONG - Inline calculations
+<div style={{ borderColor: `rgb(126 211 33 / var(--border-opacity))` }}>
+```
+
+### **Page Color Mapping (One Category Per Page)**
+- **Dashboard**: Blue theme (`var(--color-blue)`)
+- **Trip Search**: Green theme (`var(--color-green)`)  
+- **Pricing/Offers**: Orange theme (`var(--color-orange)`)
+- **After-sales**: Red theme (`var(--color-red)`)
+- **Settings**: Purple theme (`var(--color-purple)`)
+- **Carriers**: Gray theme (`var(--color-gray)`)
+
+**🎯 Result**: Professional, consistent transport industry UI s enterprise-grade polish pre whitelabel SaaS scaling.
+
 ### Architektúra platformy
 
 **Standalone OSDM 3.2 Compliant API Architecture:**
