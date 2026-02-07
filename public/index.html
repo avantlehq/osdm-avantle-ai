@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSDM Platform - Under Development</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #192734 0%, #2c3e50 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 48px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            color: #4A90E2;
+        }
+        .version {
+            display: inline-block;
+            background: #4A90E2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 16px;
+            color: #bdc3c7;
+        }
+        .status {
+            background: rgba(126, 211, 33, 0.15);
+            border-left: 4px solid #7ED321;
+            padding: 16px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+        .status strong {
+            color: #7ED321;
+        }
+        ul {
+            list-style: none;
+            margin: 24px 0;
+        }
+        li {
+            padding: 8px 0;
+            color: #95a5a6;
+        }
+        li:before {
+            content: "→";
+            color: #4A90E2;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        .footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
+            color: #7f8c8d;
+        }
+        a {
+            color: #4A90E2;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OSDM Platform</h1>
+        <span class="version">v1.0.0 - Phase 1</span>
+
+        <p>
+            OSDM 3.2 compliant rail booking distributor API with mock European rail data.
+        </p>
+
+        <div class="status">
+            <strong>Status:</strong> Phase 1 Foundation - Repository Reset Complete
+        </div>
+
+        <p>
+            The platform is currently undergoing Phase 1 implementation. The repository has been reset
+            from legacy Next.js structure to a proper monorepo architecture with Fastify backend.
+        </p>
+
+        <ul>
+            <li>Monorepo structure established</li>
+            <li>Documentation and database schema designed</li>
+            <li>Domain model architecture defined</li>
+            <li>OSDM 3.2 specification integration pending</li>
+            <li>Fastify API server implementation in progress</li>
+        </ul>
+
+        <p>
+            <strong>Target Deployment:</strong> Docker containers (not Vercel)<br>
+            <strong>Expected Completion:</strong> Phase 1 - 2 weeks
+        </p>
+
+        <div class="footer">
+            <p>
+                Built by <a href="https://avantle.ai" target="_blank">Avantle.ai</a> -
+                Privacy-first AI platforms for European data sovereignty
+            </p>
+            <p>
+                <a href="https://github.com/avantlehq/osdm-avantle-ai" target="_blank">View on GitHub</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
