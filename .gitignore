@@ -8,8 +8,8 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# Package locks (we use npm, but ignore lock files for workspace)
-package-lock.json
+# Package locks (keep package-lock.json for reproducible builds)
+# package-lock.json - committed for reproducibility
 pnpm-lock.yaml
 yarn.lock
 
