@@ -1,0 +1,51 @@
+==========================================
+COPY THIS PROMPT TO CLAUDE TOMORROW
+==========================================
+
+I'm ready to start Phase 1 implementation of OSDM Platform (rail booking API).
+
+PROJECT STATUS:
+- Version: v1.0.0 (infrastructure complete)
+- Location: C:\Users\rasti\Projects\avantlehq\osdm-avantle-ai
+- Git: Clean, all docs updated to OSDM v3.7.1
+- Documentation: Complete (3000+ lines in /docs)
+
+TODAY'S GOAL: Phase 1 Day 1 - Setup workspace and download OSDM spec
+
+TASKS TO COMPLETE:
+1. Download OSDM v3.7.1 OpenAPI spec from https://github.com/UnionInternationalCheminsdeFer/OSDM
+   - Save to: spec/OSDM-online-api-v3.7.1.yml
+
+2. Initialize workspace packages:
+   - apps/osdm-api/package.json
+   - packages/osdm-domain/package.json
+   - packages/osdm-providers/package.json
+   - packages/osdm-schema/package.json
+
+3. Setup TypeScript configs for all packages
+
+4. Configure OpenAPI generator and generate types
+
+5. Initialize Prisma with basic schema (see docs/database/schema-design.md)
+
+6. Create basic Fastify server with health check endpoint
+
+REFERENCE DOCS:
+- docs/PHASE1-DETAIL.md - Complete implementation guide with code examples
+- docs/database/schema-design.md - Database schema
+- docs/architecture/domain-model.md - Domain specifications
+
+REQUIREMENTS:
+- Use npm workspaces (already configured)
+- Target OSDM v3.7.1 (not v3.2)
+- Commit frequently as you progress
+- Test each step before moving on
+
+SUCCESS CRITERIA:
+- OSDM spec downloaded ✓
+- All packages initialized ✓
+- Types generated from spec ✓
+- Fastify server runs with health check ✓
+- All committed and pushed ✓
+
+Please start by verifying git status and then download the OSDM v3.7.1 specification.
