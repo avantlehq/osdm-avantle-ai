@@ -22,6 +22,8 @@
     "codegen": "npm run codegen --workspace=packages/osdm-schema"
   },
   "devDependencies": {
+    "@types/node": "^25.2.1",
+    "@types/react": "^19.2.13",
     "eslint": "^9.0.0",
     "next": "^15.5.12",
     "prettier": "^3.1.1",
