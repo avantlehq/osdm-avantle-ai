@@ -3,8 +3,5 @@
   "name": "osdm-platform",
   "public": false,
   "cleanUrls": true,
-  "trailingSlash": false,
-  "installCommand": "npm install",
-  "buildCommand": "echo 'No build required'",
-  "outputDirectory": "public"
+  "trailingSlash": false
 }
