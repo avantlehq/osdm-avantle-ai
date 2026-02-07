@@ -5,7 +5,8 @@ const nextConfig = {
   trailingSlash: false,
   images: {
     unoptimized: true
-  }
+  },
+  outputFileTracingRoot: __dirname
 }
 
 module.exports = nextConfig

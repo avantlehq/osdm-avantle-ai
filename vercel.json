@@ -3,5 +3,7 @@
   "name": "osdm-platform",
   "public": false,
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "installCommand": "npm install",
+  "framework": "nextjs"
 }
