@@ -1,27 +1,44 @@
 {
-  "name": "osdm-avantle-ai",
-  "version": "1.2.0",
+  "name": "osdm-platform",
+  "version": "1.0.0",
   "private": true,
+  "description": "OSDM 3.2 compliant rail booking distributor API with mock European rail data",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "next": "16.0.10",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "dev:api": "npm run dev --workspace=apps/osdm-api",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces",
+    "db:migrate": "cd infra/prisma && npx prisma migrate dev",
+    "db:generate": "cd infra/prisma && npx prisma generate",
+    "docker:up": "cd infra && docker-compose up -d",
+    "docker:down": "cd infra && docker-compose down",
+    "codegen": "npm run codegen --workspace=packages/osdm-schema"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.10",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "typescript": "^5.3.3",
+    "eslint": "^9.0.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avantlehq/osdm-avantle-ai.git"
+  },
+  "keywords": [
+    "osdm",
+    "rail",
+    "booking",
+    "transport",
+    "api"
+  ],
+  "author": "Avantle.ai",
+  "license": "UNLICENSED"
 }
