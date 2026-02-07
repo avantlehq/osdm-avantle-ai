@@ -3,5 +3,7 @@
   "name": "osdm-platform",
   "public": false,
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "installCommand": "npm install",
+  "buildCommand": "echo 'Static site - no build needed'"
 }
