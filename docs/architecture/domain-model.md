@@ -13,7 +13,7 @@ This document describes the domain model for the OSDM Platform, following Domain
 ```
 ┌─────────────────────────────────────┐
 │         API Layer (Fastify)         │
-│  OSDM 3.2 REST Endpoints            │
+│  OSDM 3.7 REST Endpoints            │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐

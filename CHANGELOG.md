@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-02-07
 
 ### Summary
-Complete repository reset to establish proper foundation for OSDM 3.2 rail booking platform. Removed legacy DPIA scaffolding and created clean monorepo architecture with comprehensive documentation. Fixed all CI/CD and deployment infrastructure.
+Complete repository reset to establish proper foundation for OSDM 3.7 rail booking platform. Removed legacy DPIA scaffolding and created clean monorepo architecture with comprehensive documentation. Fixed all CI/CD and deployment infrastructure.
 
 ### Changed
 - Complete repository reset for Phase 1 implementation
@@ -91,11 +91,11 @@ Complete repository reset to establish proper foundation for OSDM 3.2 rail booki
 ## [Unreleased] - Phase 1 Implementation
 
 ### To Be Added
-- OSDM v3.2 OpenAPI specification download
+- OSDM v3.7 OpenAPI specification download
 - TypeScript type generation from OpenAPI spec
 - Domain entities implementation
 - Mock European rail provider with realistic data
-- OSDM 3.2 compliant API endpoints
+- OSDM 3.7 compliant API endpoints
 - Prisma schema and database migrations
 - Docker Compose setup with PostgreSQL
 - Integration test suite with 3 booking scenarios

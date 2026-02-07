@@ -1,6 +1,6 @@
 # OSDM Standalone API Implementation Roadmap
 
-**Project:** OSDM 3.2 Compliant Rail Booking Sandbox
+**Project:** OSDM 3.7 Compliant Rail Booking Sandbox
 **Current Version:** v1.0.0 (Infrastructure Ready)
 **Target Version:** v1.2.0 (Phase 1 Complete)
 **Status:** Phase 1 - Pending Implementation
@@ -21,12 +21,12 @@
 
 ## 🎯 Project Overview
 
-Building a **standalone OSDM 3.2 compliant distributor API** with mock European rail data, designed for pluggable provider architecture. **No dependency on Bileto** - treat it later as "just another OSDM provider" behind our abstraction.
+Building a **standalone OSDM 3.7 compliant distributor API** with mock European rail data, designed for pluggable provider architecture. **No dependency on Bileto** - treat it later as "just another OSDM provider" behind our abstraction.
 
 **Architecture Strategy:**
 - **Clean separation**: domain/providers/api layers
 - **Provider abstraction**: Mock EU → later GTFS, Bileto, direct carriers
-- **OSDM 3.2 compliance**: Generated from official OpenAPI spec
+- **OSDM 3.7 compliance**: Generated from official OpenAPI spec
 - **Containerized deployment**: Docker + Postgres
 
 ## 📅 Implementation Phases
@@ -35,7 +35,7 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
 
 **⏳ STATUS:** Pending implementation (infrastructure ready, tasks below to be executed)
 
-**Goal:** Standalone OSDM 3.2 compliant API with mock European rail data
+**Goal:** Standalone OSDM 3.7 compliant API with mock European rail data
 **Tech Stack:** Node.js + TypeScript + Fastify + Postgres + Prisma + OpenAPI Generator
 **📋 Detailed Guide:** See [PHASE1-DETAIL.md](./PHASE1-DETAIL.md) for step-by-step implementation
 
@@ -47,10 +47,10 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
     packages/osdm-domain/    # Clean domain model  
     packages/osdm-providers/mock-eu/  # Mock provider
     packages/osdm-schema/    # Generated types
-    spec/OSDM-online-api-v3.2.0.yml
+    spec/OSDM-online-api-v3.7.1.yml
     infra/docker-compose.yml
   ```
-- [ ] **Download OSDM v3.2 OpenAPI spec** from official UIC repository
+- [ ] **Download OSDM v3.7 OpenAPI spec** from official UIC repository
 - [ ] **Configure OpenAPI generator** for TypeScript types + controller interfaces
 - [ ] **Setup Prisma** with Postgres for bookings storage
 - [ ] **Basic Fastify server** with health check endpoint
@@ -104,7 +104,7 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
 
 #### Day 7-8: OSDM API Implementation
 - [ ] **Wire Generated Controllers** to domain use cases
-- [ ] **Core OSDM 3.2 Endpoints**:
+- [ ] **Core OSDM 3.7 Endpoints**:
   - [ ] `GET /places` - Place search (stations, cities)
   - [ ] `POST /trips/search` - Trip search between OD with datetime
   - [ ] `POST /offers` - Create priced offers from trip selection
@@ -116,7 +116,7 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
   - [ ] `GET /health` - Health check
 
 - [ ] **Request/Response Mapping**
-  - [ ] Domain models ↔ OSDM v3.2 JSON schemas
+  - [ ] Domain models ↔ OSDM v3.7 JSON schemas
   - [ ] Zod validation for all incoming requests
   - [ ] Proper HTTP status codes + error responses
   - [ ] OSDM-compliant error format
@@ -143,7 +143,7 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
   - [ ] Health checks and logging
 
 #### Phase 1 Success Criteria
-- [ ] **OSDM 3.2 Compliance**: All 9 endpoints fully implemented per spec
+- [ ] **OSDM 3.7 Compliance**: All 9 endpoints fully implemented per spec
 - [ ] **Mock Rail Network**: 6 carriers, 50+ stations, cross-border routes working
 - [ ] **Provider Architecture**: Clean abstraction ready for GTFS/carrier plugins
 - [ ] **Complete Booking Flow**: search → offer → booking → fulfillment → after-sales
@@ -212,7 +212,7 @@ Building a **standalone OSDM 3.2 compliant distributor API** with mock European 
 - **Runtime**: Node.js + TypeScript
 - **API Framework**: Fastify (high performance, validation)
 - **Database**: Postgres + Prisma ORM
-- **API Generation**: OpenAPI Generator from OSDM v3.2 spec
+- **API Generation**: OpenAPI Generator from OSDM v3.7 spec
 - **Validation**: Zod schemas
 - **Testing**: Jest + Supertest for integration tests
 - **Containerization**: Docker + Docker Compose
@@ -239,7 +239,7 @@ class DbNavigatorProvider implements ProviderAdapter { ... }
 ## 📊 Success Metrics
 
 ### Technical KPIs
-- **OSDM 3.2 Compliance**: 100% specification adherence
+- **OSDM 3.7 Compliance**: 100% specification adherence
 - **API Response Time**: < 500ms for trip search
 - **System Uptime**: 99.9% availability
 - **Test Coverage**: > 90% code coverage
@@ -270,7 +270,7 @@ class DbNavigatorProvider implements ProviderAdapter { ... }
 
 **Phase 1 Implementation Priority:**
 1. 🏗️ **Setup monorepo structure** (`osdm-platform/`)
-2. 📋 **Download OSDM v3.2 OpenAPI spec** from UIC repository
+2. 📋 **Download OSDM v3.7 OpenAPI spec** from UIC repository
 3. ⚡ **Configure OpenAPI generator** for TypeScript
 4. 🏛️ **Create domain entities** and use-cases
 5. 🇪🇺 **Implement mock European rail provider**
@@ -278,6 +278,6 @@ class DbNavigatorProvider implements ProviderAdapter { ... }
 7. 🧪 **Build 3 end-to-end test scenarios**
 8. 🐳 **Containerize with Docker**
 
-**Target**: Functional OSDM 3.2 distributor sandbox by end of day, ready for standard OSDM client integration.
+**Target**: Functional OSDM 3.7 distributor sandbox by end of day, ready for standard OSDM client integration.
 
 **Contact:** See CLAUDE.md and PHASE1-DETAIL.md for detailed technical implementation guidance.

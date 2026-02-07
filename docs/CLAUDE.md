@@ -64,12 +64,12 @@ Projekt využíva unifikovaný styling system z DPIA projektu, adaptovaný pre O
 
 ### Architektúra platformy
 
-**Standalone OSDM 3.2 Compliant API Architecture:**
+**Standalone OSDM 3.7 Compliant API Architecture:**
 
 **OSDM.avantle.ai** (distribútor/sandbox engine) - **TENTO REPOZITÁR**
 - Doména: `osdm.avantle.ai`
 - Repo: `avantlehq/osdm-avantle-ai`
-- **Core Function**: Standalone OSDM 3.2 compliant distributor API
+- **Core Function**: Standalone OSDM 3.7 compliant distributor API
 - **Architecture**: Clean separation medzi domain/providers/api layers
 - **Provider Strategy**: Mock EU data s pluggable provider abstraction
 - **Future Integration**: GTFS adapters, real carrier APIs (DB, SNCF, ÖBB, etc.)
@@ -79,7 +79,7 @@ Projekt využíva unifikovaný styling system z DPIA projektu, adaptovaný pre O
 - Multi-tenant carrier management cez provider abstraction
 - Whitelabel konfigurácie cez API gateway layer
 
-### API rozhranie (OSDM 3.2 Compliant)
+### API rozhranie (OSDM 3.7 Compliant)
 
 **Core OSDM API Endpoints:**
 ```
@@ -171,12 +171,12 @@ osdm-avantle-ai/
 **Tech stack (Phase 1 - v1.2.0):**
 - **Backend**: Node.js + TypeScript + Fastify (or Express)
 - **Database**: Postgres s Prisma ORM
-- **API Generation**: OpenAPI generator z OSDM 3.2 spec
+- **API Generation**: OpenAPI generator z OSDM 3.7 spec
 - **Architecture**: Monorepo s clean domain/provider separation
 - **Package manager**: npm (default)
 - **CI/CD**: GitHub Actions
 - **Deployment**: Docker containers
-- **API Standard**: OSDM v3.2 distributor mode
+- **API Standard**: OSDM v3.7 distributor mode
 
 **Legacy Next.js stack (Phase 0):**
 - Framework: Next.js 16 s App Router
@@ -249,9 +249,9 @@ CARRIER_REGISTRY_URL=
 
 ## 🎯 OSDM Specification Analysis
 
-### Official OSDM v3.2 Standard
+### Official OSDM v3.7 Standard
 **Source:** UIC (Union Internationale des Chemins de fer)
-**Specification:** Apache 2.0 License, REST API v3.2.0
+**Specification:** Apache 2.0 License, REST API v3.7.1 (stable, October 2024)
 
 **Core OSDM API Endpoints:**
 ```
@@ -286,7 +286,7 @@ POST /bookings/{id}/exchange-offers → výmena lístkov
 - **Standalone OSDM API** - Own controlled distributor sandbox
 - **Mock European rail data** - 6 carriers, ~50 stations, cross-border routes
 - **Provider abstraction** - Later plug GTFS, Bileto, direct carrier APIs
-- **OSDM v3.2 compliance** - Generated from official OpenAPI spec
+- **OSDM v3.7 compliance** - Generated from official OpenAPI spec
 
 ### 📋 Ďalšie kroky (budúce implementácie)
 
@@ -315,7 +315,7 @@ osdm-platform/
         adapter.ts        # ProviderAdapter implementation
     osdm-schema/          # Generated TypeScript from OpenAPI
   spec/
-    OSDM-online-api-v3.2.0.yml
+    OSDM-online-api-v3.7.1.yml
   infra/
     docker-compose.yml    # Postgres + API
     prisma/
@@ -341,7 +341,7 @@ osdm-platform/
 
 2. **API Endpoints Implementation** (Week 2, Day 6-10):
    ```typescript
-   // OSDM v3.2 compliant endpoints
+   // OSDM v3.7 compliant endpoints
    POST /api/osdm/trips-collection     → Trip search
    POST /api/osdm/offers              → Create travel offers  
    POST /api/osdm/bookings            → Create/retrieve bookings
@@ -351,14 +351,14 @@ osdm-platform/
 
 3. **TypeScript Integration:**
    - Zod schemas pre request validation
-   - Complete OSDM v3.2 type definitions
+   - Complete OSDM v3.7 type definitions
    - Error handling s proper HTTP status codes
    - Response formatting pre consistent API structure
 
 **📋 Detailed Implementation:** See [PHASE1-DETAIL.md](./PHASE1-DETAIL.md) for complete step-by-step guide.
 
 ### Phase 1 Success Metrics
-- [ ] **OSDM 3.2 Compliance:** All 9 core endpoints fully implemented
+- [ ] **OSDM 3.7 Compliance:** All 9 core endpoints fully implemented
 - [ ] **Mock European Rail:** 6 carriers, 50+ stations, cross-border routes
 - [ ] **Provider Architecture:** Clean abstraction pre future GTFS/carrier integration
 - [ ] **End-to-End Testing:** 3 booking scenarios (BA→VIE, VIE→MUN, PRG→ZUR)
@@ -439,7 +439,7 @@ npm run codegen      # Generate types from OpenAPI spec
 npm run db:migrate   # Run Prisma migrations
 npm run docker:up    # Start with Docker Compose
 
-# API Testing (OSDM 3.2 Compliant)
+# API Testing (OSDM 3.7 Compliant)
 GET  http://localhost:8080/places?query=Bratislava
 POST http://localhost:8080/trips/search
 POST http://localhost:8080/offers

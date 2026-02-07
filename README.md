@@ -6,7 +6,7 @@
 
 ## Overview
 
-OSDM Platform is a standalone **OSDM 3.2 compliant rail booking distributor API** with mock European rail data, designed for clean provider architecture and future integration with real data sources.
+OSDM Platform is a standalone **OSDM 3.7 compliant rail booking distributor API** with mock European rail data, designed for clean provider architecture and future integration with real data sources.
 
 ### Current Status (v1.0.0 - 2024-02-07)
 
@@ -24,11 +24,11 @@ OSDM Platform is a standalone **OSDM 3.2 compliant rail booking distributor API*
 - Version tracking with CHANGELOG.md
 
 **⏳ PENDING (Phase 1 Implementation):**
-- OSDM v3.2 OpenAPI specification download
+- OSDM v3.7 OpenAPI specification download
 - TypeScript domain entities implementation
 - Mock European rail provider
 - Fastify API server
-- OSDM 3.2 compliant endpoints
+- OSDM 3.7 compliant endpoints
 - Prisma database schema
 - Docker containerization
 - Integration tests
@@ -39,7 +39,7 @@ OSDM Platform is a standalone **OSDM 3.2 compliant rail booking distributor API*
 
 ### Key Features
 
-- ✅ **OSDM 3.2 Compliance** - Full adherence to official UIC specification
+- ✅ **OSDM 3.7 Compliance** - Full adherence to official UIC specification
 - 🏗️ **Clean Architecture** - Domain-driven design with provider abstraction
 - 🇪🇺 **Mock European Rail Network** - 6 carriers, 50+ stations, cross-border routes
 - 🔌 **Pluggable Providers** - Easy integration with GTFS, carrier APIs, or external services
@@ -64,7 +64,7 @@ osdm-platform/
 
 ## OSDM API Endpoints (Target)
 
-### Core OSDM 3.2 Endpoints
+### Core OSDM 3.7 Endpoints
 - `GET /places` - Search stations and places
 - `POST /trips/search` - Search trips between origin/destination
 - `POST /offers` - Create priced travel offers
@@ -160,7 +160,7 @@ Comprehensive documentation available in `/docs`:
 - ✅ Monorepo structure established
 - ✅ Documentation complete (database schema, domain model, implementation guides)
 - ✅ CI/CD infrastructure configured (GitHub Actions, Vercel)
-- ⏳ OSDM 3.2 OpenAPI spec integration (pending)
+- ⏳ OSDM 3.7 OpenAPI spec integration (pending)
 - ⏳ Domain entities and use cases (pending)
 - ⏳ Mock European provider (pending)
 - ⏳ OSDM API endpoints (pending)
@@ -191,7 +191,7 @@ This is a private project under development. Contact Avantle.ai for collaboratio
 - **Runtime:** Node.js 20+ with TypeScript
 - **API Framework:** Fastify
 - **Database:** PostgreSQL 15+ with Prisma ORM
-- **API Spec:** OpenAPI 3.1 (OSDM v3.2)
+- **API Spec:** OpenAPI 3.1 (OSDM v3.7)
 - **Testing:** Jest with Supertest
 - **Containerization:** Docker + Docker Compose
 - **Monorepo:** npm workspaces

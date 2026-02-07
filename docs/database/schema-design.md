@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document outlines the database schema for the OSDM Platform, designed to support OSDM 3.2 compliant rail booking operations.
+This document outlines the database schema for the OSDM Platform, designed to support OSDM 3.7 compliant rail booking operations.
 
 ## Technology Stack
 

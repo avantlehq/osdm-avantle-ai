@@ -1,6 +1,6 @@
 # OSDM OpenAPI Specification
 
-This directory should contain the official OSDM v3.2 OpenAPI specification.
+This directory should contain the official OSDM v3.7 OpenAPI specification.
 
 ## Download Instructions
 
@@ -11,18 +11,18 @@ Visit the official OSDM repository:
 - https://github.com/UnionInternationalCheminsdeFer/OSDM
 
 Download the file:
-- `OSDM-online-api-v3.2.0.yml` or latest version
+- `OSDM-online-api-v3.7.1.yml` or latest version
 
 ### Option 2: Manual Download
 1. Navigate to the UIC OSDM GitHub repository
 2. Locate the OpenAPI specification file
-3. Save as `spec/OSDM-online-api-v3.2.0.yml`
+3. Save as `spec/OSDM-online-api-v3.7.1.yml`
 
 ## Expected File
 
 ```
 spec/
-└── OSDM-online-api-v3.2.0.yml
+└── OSDM-online-api-v3.7.1.yml
 ```
 
 ## Usage
@@ -36,13 +36,14 @@ Once downloaded, the OpenAPI spec will be used for:
 
 2. **API Validation** - Validate request/response schemas
 3. **Documentation** - Auto-generate API documentation
-4. **Contract Testing** - Ensure OSDM 3.2 compliance
+4. **Contract Testing** - Ensure OSDM 3.7 compliance
 
 ## Version Notes
 
-- **OSDM v3.2** is the target specification
+- **OSDM v3.7.1** is the target specification (current stable, October 2024)
+- v3.7 includes: bulk passenger operations, two-phase commit, enhanced offer model
 - Always use the official UIC specification
-- Check for updates periodically
+- Check for updates periodically at https://osdm.io
 - License: Apache 2.0 (from UIC)
 
 ## Next Steps

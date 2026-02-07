@@ -2,7 +2,7 @@
 
 **Target Version:** v1.2.0  
 **Duration:** 10 days  
-**Goal:** Standalone OSDM 3.2 compliant distributor API with mock European rail data
+**Goal:** Standalone OSDM 3.7 compliant distributor API with mock European rail data
 
 ## 📋 Day 1-2: Monorepo & OpenAPI Setup
 
@@ -53,10 +53,10 @@ mkdir -p spec infra
 }
 ```
 
-### 1.2 Download OSDM v3.2 OpenAPI Spec
+### 1.2 Download OSDM v3.7 OpenAPI Spec
 ```bash
-# Download official OSDM v3.2 spec
-curl -o spec/OSDM-online-api-v3.2.0.yml https://raw.githubusercontent.com/UnionInternationalCheminsdeFer/OSDM/main/specification/OSDM-online-api-v3.2.0.yml
+# Download official OSDM v3.7 spec
+curl -o spec/OSDM-online-api-v3.7.1.yml https://raw.githubusercontent.com/UnionInternationalCheminsdeFer/OSDM/main/specification/OSDM-online-api-v3.7.1.yml
 ```
 
 ### 1.3 Setup OpenAPI Code Generation
@@ -68,7 +68,7 @@ curl -o spec/OSDM-online-api-v3.2.0.yml https://raw.githubusercontent.com/UnionI
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "codegen": "openapi-generator-cli generate -i ../../spec/OSDM-online-api-v3.2.0.yml -g typescript-fetch -o ./src/generated",
+    "codegen": "openapi-generator-cli generate -i ../../spec/OSDM-online-api-v3.7.1.yml -g typescript-fetch -o ./src/generated",
     "build": "tsc",
     "type-check": "tsc --noEmit"
   },
@@ -603,7 +603,7 @@ fastify.register(swagger, {
   routePrefix: '/docs',
   swagger: {
     info: {
-      title: 'OSDM v3.2 Compliant API',
+      title: 'OSDM v3.7 Compliant API',
       description: 'Standalone OSDM distributor with mock European rail data',
       version: '1.2.0'
     }
@@ -964,7 +964,7 @@ HOST=0.0.0.0
 LOG_LEVEL=debug
 
 # OSDM Configuration  
-OSDM_VERSION=3.2.0
+OSDM_VERSION=3.7.1
 OSDM_MODE=distributor
 OSDM_PROVIDER=mock-eu
 
@@ -986,7 +986,7 @@ ENABLE_TRACING=true
 ## 📊 Phase 1 Success Criteria
 
 ### ✅ Technical Implementation
-- [ ] **OSDM 3.2 Compliance**: All 9 endpoints fully implemented per spec
+- [ ] **OSDM 3.7 Compliance**: All 9 endpoints fully implemented per spec
   - [ ] `GET /places` - Place search
   - [ ] `POST /trips/search` - Trip search  
   - [ ] `POST /offers` - Travel offers creation
@@ -1009,7 +1009,7 @@ ENABLE_TRACING=true
 - [ ] **Clean Domain Layer**: Entities + use cases independent of OSDM
 - [ ] **Provider Abstraction**: Interface ready for GTFS/carrier integration
 - [ ] **Mock Provider**: Complete implementation with European rail data
-- [ ] **OSDM Mapping**: Domain models ↔ OSDM v3.2 JSON schemas
+- [ ] **OSDM Mapping**: Domain models ↔ OSDM v3.7 JSON schemas
 
 ### ✅ Complete Booking Flow
 - [ ] **Search → Offer → Booking → Fulfillment → After-sales**
@@ -1065,6 +1065,6 @@ curl http://localhost:8080/health
 
 ---
 
-**Success Definition**: When `docker-compose up` results in a working OSDM 3.2 compliant API that can handle the complete booking flow for European rail journeys, with all endpoints returning proper responses and 3 test scenarios passing.
+**Success Definition**: When `docker-compose up` results in a working OSDM 3.7 compliant API that can handle the complete booking flow for European rail journeys, with all endpoints returning proper responses and 3 test scenarios passing.
 
 **Next Phase**: Upon completion, proceed to Phase 2 (Provider Ecosystem v1.3.0) with GTFS integration and multiple provider orchestration.

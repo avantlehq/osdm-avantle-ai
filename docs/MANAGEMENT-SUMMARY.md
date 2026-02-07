@@ -1,6 +1,6 @@
 # OSDM Rail Booking Platform - Management Summary
 
-**Project:** OSDM 3.2 Compliant Rail Booking Sandbox  
+**Project:** OSDM 3.7 Compliant Rail Booking Sandbox  
 **Domain:** osdm.avantle.ai  
 **Version:** v1.1.2 → v1.2.0  
 **Status:** Phase 1 - Standalone Implementation  
@@ -8,7 +8,7 @@
 
 ## 🎯 Executive Summary
 
-The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distributor API** with mock European rail data, designed for clean provider architecture. **No dependency on Bileto** - it's treated as just another pluggable provider. The platform provides a controlled sandbox environment for OSDM client testing while maintaining full specification compliance and enabling future integration with real GTFS feeds and carrier APIs.
+The **OSDM Rail Booking Platform** is a **standalone OSDM 3.7 compliant distributor API** with mock European rail data, designed for clean provider architecture. **No dependency on Bileto** - it's treated as just another pluggable provider. The platform provides a controlled sandbox environment for OSDM client testing while maintaining full specification compliance and enabling future integration with real GTFS feeds and carrier APIs.
 
 ## 📈 Business Objectives
 
@@ -29,16 +29,16 @@ The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distribu
 ### Core Technology Stack (Phase 1)
 - **Runtime:** Node.js + TypeScript + Fastify
 - **Database:** Postgres + Prisma ORM
-- **API Generation:** OpenAPI Generator from OSDM v3.2 spec
+- **API Generation:** OpenAPI Generator from OSDM v3.7 spec
 - **Architecture:** Monorepo with clean domain/provider separation
 - **Containerization:** Docker + Docker Compose
-- **API Standard:** Full OSDM v3.2 distributor mode compliance
+- **API Standard:** Full OSDM v3.7 distributor mode compliance
 
 ### Key Differentiators
 - **Own controlled OSDM distributor** - no external dependencies
 - **Provider abstraction architecture** - plug any data source later
 - **Mock European rail network** - 6 carriers, 50+ stations, cross-border routes
-- **Full OSDM 3.2 compliance** - generated from official OpenAPI spec
+- **Full OSDM 3.7 compliance** - generated from official OpenAPI spec
 - **Clean separation** - domain logic independent of OSDM specifics
 
 ## 🎪 Competitive Advantages
@@ -73,7 +73,7 @@ The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distribu
 ### OSDM Standard Adoption
 - **UIC endorsed** open standard with industry backing
 - **Own sandbox environment** provides controlled testing without external dependencies
-- **Official OpenAPI spec** ensures perfect compliance with OSDM v3.2
+- **Official OpenAPI spec** ensures perfect compliance with OSDM v3.7
 - **EU regulatory support** for interoperable transport standards
 
 ### Early Indicators
@@ -85,7 +85,7 @@ The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distribu
 ## 📅 Development Timeline
 
 ### Phase 1: OSDM Foundation (Week 1-2) → v1.2.0
-- **Standalone OSDM 3.2 API** with full specification compliance
+- **Standalone OSDM 3.7 API** with full specification compliance
 - **Mock European rail data** - 6 carriers, 50+ stations, cross-border routes
 - **Clean provider architecture** - ready for GTFS/carrier integration
 - **Complete booking flow** - search → offer → booking → fulfillment → after-sales
@@ -161,10 +161,10 @@ The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distribu
 
 ### Immediate Actions (Phase 1)
 1. **Setup monorepo structure** with domain/provider separation
-2. **Download OSDM v3.2 OpenAPI spec** from UIC repository
+2. **Download OSDM v3.7 OpenAPI spec** from UIC repository
 3. **Generate TypeScript types** and controller interfaces
 4. **Implement mock European rail provider** with realistic data
-5. **Build complete booking flow** compliant with OSDM 3.2
+5. **Build complete booking flow** compliant with OSDM 3.7
 
 ### Medium-term Strategy (Phase 2-3)
 1. **Integrate GTFS feeds** from European transport authorities
@@ -188,7 +188,7 @@ The **OSDM Rail Booking Platform** is a **standalone OSDM 3.2 compliant distribu
 ✅ **Standards compliance** - Official OpenAPI spec adherence  
 
 ### Success Indicators to Monitor
-- **OSDM 3.2 compliance** - all 9 endpoints fully functional
+- **OSDM 3.7 compliance** - all 9 endpoints fully functional
 - **Mock rail network quality** - realistic European booking scenarios
 - **Provider architecture validation** - easy integration testing
 - **Container deployment success** - `docker-compose up` working system
