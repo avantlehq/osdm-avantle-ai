@@ -118,36 +118,53 @@ Tento agent bude konzumovaný OSDM Studio pre:
 - Pricing and availability analysis cez `/api/v1/engine/analyze`
 - Booking and journey reports cez `/api/v1/report/security`
 
-## Aktuálny stav repozitára (v1.1.2 → v1.2.0)
+## Aktuálny stav repozitára (v1.0.0 - Reset Complete)
 
-### ✅ Hotové komponenty
+**Dátum:** 2024-02-07
+**Verzia:** v1.0.0
+**Stav:** Infrastructure ready, Phase 1 implementation pending
+
+### ✅ Hotové komponenty (v1.0.0)
 
 **Infraštruktúra:**
-- Next.js 16 + TypeScript + Tailwind CSS setup
-- GitHub Actions CI workflow (.github/workflows/ci.yml)
-- Vercel deployment konfigurácia (vercel.json)
+- Monorepo štruktúra s npm workspaces
+- GitHub Actions CI workflow (passing)
+- Vercel deployment (temporary Next.js shim for status page)
 - Environment variables template (.env.example)
-- Semantic versioning (aktuálne v1.1.1)
+- Semantic versioning s CHANGELOG.md
+- `.npmrc` pre npm package manager enforcement
+- Complete documentation structure
 
-**API Endpoints (implementované ako mock):**
+**Dokumentácia:**
 ```
-src/app/api/
-├── provision/
-│   └── route.ts              # POST /api/provision
-└── v1/
-    ├── engine/
-    │   ├── scan/
-    │   │   └── route.ts      # POST /api/v1/engine/scan
-    │   └── analyze/
-    │       └── route.ts      # POST /api/v1/engine/analyze
-    └── report/
-        └── security/
-            └── route.ts      # POST /api/v1/report/security
+docs/
+├── database/
+│   └── schema-design.md          # Complete Prisma schema design
+├── architecture/
+│   └── domain-model.md           # DDD specifications
+├── CLAUDE.md                     # Project context (tento súbor)
+├── MANAGEMENT-SUMMARY.md         # Business objectives
+├── TODOLIST.md                   # High-level roadmap (all phases)
+└── PHASE1-DETAIL.md             # Step-by-step Phase 1 guide (1000+ lines)
 ```
 
-**UI Components:**
-- Landing page (src/app/page.tsx) - agent status a API overview pre OSDM transport
-- Agent Shell (src/app/agent/page.tsx) - monitoring UI pre booking engine
+**Monorepo Structure:**
+```
+osdm-avantle-ai/
+├── apps/osdm-api/              # Fastify server (placeholder)
+├── packages/
+│   ├── osdm-domain/            # Domain entities (placeholder)
+│   ├── osdm-providers/         # Provider abstraction (placeholder)
+│   └── osdm-schema/            # Generated types (placeholder)
+├── spec/                       # OSDM OpenAPI spec (to download)
+├── infra/                      # Docker & Prisma (placeholder)
+└── docs/                       # Complete documentation ✅
+```
+
+**Temporary Next.js Shim:**
+- Minimal Next.js 15 + React 19 setup for Vercel deployment
+- Serves static status page at osdm.avantle.ai
+- Will be removed after Phase 1 Docker deployment ready
 
 ### 🔧 Technické detaily
 
@@ -396,7 +413,7 @@ Založené na open transport standards a AI-enhanced user experience.
 
 ## Versioning Strategy
 
-**Current Version:** v1.1.1
+**Current Version:** v1.0.0 (2024-02-07)
 **Versioning Scheme:** Semantic Versioning (MAJOR.MINOR.PATCH)
 
 - **MAJOR** - Breaking API changes, major architecture updates
